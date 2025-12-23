@@ -1,94 +1,59 @@
 ---
-title: 'Development'
-description: 'Preview changes locally to update your docs'
+title: "Author"
+description: "About the author of AARM (Autonomous Action Runtime Management) and why this work is published openly for everyone to use."
 ---
 
-<Info>
-  **Prerequisites**:
-  - Node.js version 19 or higher
-  - A docs repository with a `docs.json` file
-</Info>
+## About the author
 
-Follow these steps to install and run Mintlify on your operating system.
+Hi — I’m **Herman Errico**.
 
-<Steps>
-<Step title="Install the Mintlify CLI">
+I work at the intersection of **security engineering, compliance frameworks, and AI governance**, with a focus on turning abstract requirements into **runtime controls** that teams can actually implement and operate.
 
-```bash
-npm i -g mint
-```
-</Step>
+Over the last few years, I’ve spent a lot of time on:
+- **Security control design** (policy, identity, enforcement, auditability)
+- Mapping practical controls to **ISO 27001/27002**, **SOC 2**, **NIST**, and emerging **AI governance** expectations
+- Building programs and tooling that make security **measurable**, **automatable**, and **repeatable**
+- Thinking about how modern systems fail when autonomy increases (humans → software → AI-driven systems)
 
-<Step title="Preview locally">
+## Why I created AARM
 
-Navigate to your docs directory where your `docs.json` file is located, and run the following command:
+As AI systems shift from “assistant” to “actor,” the main risk stops being what the model *says* and becomes what the system *does*:  
+**tool calls, API actions, state changes, and data movement**.
 
-```bash
-mint dev
-```
+AARM (Autonomous Action Runtime Management) is my attempt to name and define that missing layer:
+> a runtime control plane for **authorizing, constraining, and auditing autonomous actions**.
 
-A local preview of your documentation will be available at `http://localhost:3000`.
+This is not a product pitch — it’s a **blueprint** meant to be useful whether you’re building with MCP, function calling, plugins, internal tool servers, or whatever comes next.
 
-</Step>
-</Steps>
+## Open by default
 
-## Custom ports
+This work is published **openly** on purpose.
 
-By default, Mintlify uses port 3000. You can customize the port Mintlify runs on by using the `--port` flag. For example, to run Mintlify on port 3333, use this command:
+AARM is here for:
+- builders shipping agentic workflows in production
+- security teams trying to govern tool-enabled AI
+- researchers and standards folks who want a clean vocabulary
+- anyone who needs a practical way to reason about **runtime AI actions**
 
-```bash
-mint dev --port 3333
-```
+You can:
+- reuse the terminology and definitions
+- implement the architecture patterns
+- copy/paste the checklists into your own policies
+- propose edits, extensions, and improvements
 
-If you attempt to run Mintlify on a port that's already in use, it will use the next available port:
+If you build on it, attribution is appreciated — but the priority is adoption and shared progress.
 
-```md
-Port 3000 is already in use. Trying 3001 instead.
-```
+## Contact / links
 
-## Mintlify versions
+<Card title="Contribute to AARM" icon="code-branch" horizontal href="/contributing">
+  Propose edits, add patterns, and share real-world implementation notes.
+</Card>
 
-Please note that each CLI release is associated with a specific version of Mintlify. If your local preview does not align with the production version, please update the CLI:
-
-```bash
-npm mint update
-```
-
-## Validating links
-
-The CLI can assist with validating links in your documentation. To identify any broken links, use the following command:
-
-```bash
-mint broken-links
-```
-
-## Deployment
-
-If the deployment is successful, you should see the following:
-
-<Frame>
-  <img src="/images/checks-passed.png" alt="Screenshot of a deployment confirmation message that says All checks have passed." style={{ borderRadius: '0.5rem' }} />
-</Frame>
-
-## Code formatting
-
-We suggest using extensions on your IDE to recognize and format MDX. If you're a VSCode user, consider the [MDX VSCode extension](https://marketplace.visualstudio.com/items?itemName=unifiedjs.vscode-mdx) for syntax highlighting, and [Prettier](https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode) for code formatting.
-
-## Troubleshooting
-
-<AccordionGroup>
-  <Accordion title='Error: Could not load the "sharp" module using the darwin-arm64 runtime'>
-
-    This may be due to an outdated version of node. Try the following:
-    1. Remove the currently-installed version of the CLI: `npm remove -g mint`
-    2. Upgrade to Node v19 or higher.
-    3. Reinstall the CLI: `npm i -g mint`
-  </Accordion>
-
-  <Accordion title="Issue: Encountering an unknown error">
-  
-    Solution: Go to the root of your device and delete the `~/.mintlify` folder. Then run `mint dev` again.
-  </Accordion>
-</AccordionGroup>
-
-Curious about what changed in the latest CLI version? Check out the [CLI changelog](https://www.npmjs.com/package/mintlify?activeTab=versions).
+<Columns cols={2}>
+  <Card title="Blueprint" icon="book" href="/blueprint">
+    The core definitions and reference architecture.
+  </Card>
+  <Card title="Patterns" icon="layer-group" href="/patterns">
+    Practical recipes for enforcement, approvals, receipts, and telemetry.
+  </Card>
+</Columns>
