@@ -1,56 +1,82 @@
 ---
 title: "Introduction"
-description: "What is AARM (Autonomous Action Runtime Managment)? AARM is an open source project."
+description: "AARM (Autonomous Action Runtime Management) is an open, implementation-oriented blueprint for authorizing, constraining, and auditing autonomous AI actions at runtime."
 ---
 
-## Setting up
+## What is AARM?
 
-Get your documentation site up and running in minutes.
+**Autonomous Action Runtime Management (AARM)** is a security and governance layer for systems where AI doesn’t just generate text — it **takes actions** (API calls, tool invocations, database writes, tickets, emails, code changes, etc.).
 
-<Card title="Start here" icon="rocket" horizontal href="/quickstart">
-  Read the standard and blue prints
+AARM focuses on the invariant: **runtime execution of actions**.
+
+<Columns cols={2}>
+  <Card title="Read the Blueprint" icon="book" href="/blueprint">
+    The core concepts, reference architecture, and design goals.
+  </Card>
+  <Card title="Quickstart" icon="rocket" href="/quickstart">
+    Implement AARM patterns in your stack in under an hour.
+  </Card>
+</Columns>
+
+## Why AARM exists
+
+Traditional security stacks are great at **events**. But AI systems introduce a new primary risk surface: **actions**.
+
+AARM is built for:
+- **Policy enforcement in-line** (allow/deny/modify)
+- **Parameter constraints** (schemas, allowlists, scoping)
+- **Step-up approvals** for high-risk operations
+- **Action receipts** (tamper-evident audit trail)
+- **Effect capture** (what changed, not just what was called)
+
+<Card title="AARM vs. SIEM" icon="shield" horizontal href="/concepts/aarm-vs-siem">
+  SIEM was for events. AARM is for actions.
 </Card>
 
-## Make it yours
+## Core building blocks
 
-Design a docs site that looks great and empowers your users.
-
-<Columns cols={2}>
-  <Card title="Edit locally" icon="pen-to-square" href="/development">
-    Edit your docs locally and preview them in real time.
+<Columns cols={3}>
+  <Card title="Control Plane" icon="sliders" href="/concepts/control-plane">
+    Central policy + identity + approvals for autonomous actions.
   </Card>
-  <Card title="Customize your site" icon="palette" href="/essentials/settings">
-    Customize the design and colors of your site to match your brand.
+  <Card title="Runtime Enforcement" icon="lock" href="/concepts/runtime-enforcement">
+    Inline allow/deny, parameter shaping, rate limits, and sandboxing.
   </Card>
-  <Card title="Set up navigation" icon="map" href="/essentials/navigation">
-    Organize your docs to help users find what they need and succeed with your product.
+  <Card title="Action Telemetry" icon="chart-line" href="/concepts/telemetry">
+    Structured action events that plug into SIEM/SOAR.
   </Card>
-  <Card title="API documentation" icon="terminal" href="/api-reference/introduction">
-    Auto-generate API documentation from OpenAPI specifications.
+  <Card title="Action Receipts" icon="receipt" href="/concepts/receipts">
+    Signed records binding request, decision, result, and context.
+  </Card>
+  <Card title="Approvals" icon="user-check" href="/concepts/approvals">
+    Step-up controls for sensitive operations (4-eyes, break-glass).
+  </Card>
+  <Card title="Effect Capture" icon="diagram-project" href="/concepts/effects">
+    Track downstream state changes (diffs, IDs, commits, row-level logs).
   </Card>
 </Columns>
 
-## Create beautiful pages
-
-Everything you need to create world-class documentation.
+## Start implementing
 
 <Columns cols={2}>
-  <Card title="Write with MDX" icon="pen-fancy" href="/essentials/markdown">
-    Use MDX to style your docs pages.
+  <Card title="Reference Architecture" icon="sitemap" href="/blueprint/reference-architecture">
+    The canonical AARM components and data flows.
   </Card>
-  <Card title="Code samples" icon="code" href="/essentials/code">
-    Add sample code to demonstrate how to use your product.
+  <Card title="Policy Model" icon="scale-balanced" href="/blueprint/policy-model">
+    Action-centric policies: type, target, data class, context, control.
   </Card>
-  <Card title="Images" icon="image" href="/essentials/images">
-    Display images and other media.
+  <Card title="Threat Model" icon="bug" href="/blueprint/threat-model">
+    Prompt injection, compromised tools, over-privileged creds, data egress.
   </Card>
-  <Card title="Reusable snippets" icon="recycle" href="/essentials/reusable-snippets">
-    Write once and reuse across your docs.
+  <Card title="Patterns & Recipes" icon="layer-group" href="/patterns">
+    Practical patterns: tool gateways, scoped tokens, approval flows, receipts.
   </Card>
 </Columns>
 
-## Need inspiration?
+## Contribute
 
-<Card title="See complete examples" icon="stars" href="https://mintlify.com/customers">
-  Browse our showcase of exceptional documentation sites.
+AARM is an **open source** effort. If you’re building agentic systems, tool servers, or governance layers, you can help shape the standard.
+
+<Card title="Contributing Guide" icon="code-branch" horizontal href="/contributing">
+  Propose changes, add patterns, and share implementation notes.
 </Card>
