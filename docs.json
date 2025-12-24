@@ -3,83 +3,99 @@
   "theme": "mint",
   "name": "AARM Reference Architecture",
   "colors": {
-   "primary": "#0f172a",
-   "light": "#334155",
-   "dark": "#020617"
+    "primary": "#0f172a",
+    "light": "#07C983",
+    "dark": "#15803D"
   },
   "favicon": "/favicon.svg",
   "navigation": {
     "tabs": [
       {
-        "tab": "Guides",
+        "tab": "Reference",
         "groups": [
           {
-            "group": "Getting started",
+            "group": "Overview",
             "pages": [
               "index",
-              "quickstart",
-              "development",
-              "about"
+              "about",
+              "principles",
+              "scope-and-non-goals"
             ]
           },
           {
-            "group": "Customization",
+            "group": "Core Concepts",
             "pages": [
-              "essentials/settings",
-              "essentials/navigation"
+              "concepts/aarm-overview",
+              "concepts/autonomous-actions",
+              "concepts/runtime-boundaries",
+              "concepts/control-vs-execution"
             ]
           },
           {
-            "group": "Writing content",
+            "group": "Architecture",
             "pages": [
-              "essentials/markdown",
-              "essentials/code",
-              "essentials/images",
-              "essentials/reusable-snippets"
+              "architecture/reference-architecture",
+              "architecture/control-plane",
+              "architecture/execution-plane",
+              "architecture/policy-evaluation",
+              "architecture/failure-modes"
             ]
           },
           {
-            "group": "AI tools",
+            "group": "Rules and Constraints",
             "pages": [
-              "ai-tools/cursor",
-              "ai-tools/claude-code",
-              "ai-tools/windsurf"
-            ]
-          }
-        ]
-      },
-      {
-        "tab": "API reference",
-        "groups": [
-          {
-            "group": "API documentation",
-            "pages": [
-              "api-reference/introduction"
+              "rules/action-eligibility",
+              "rules/policies",
+              "rules/invariants",
+              "rules/escalation-and-shutdown",
+              "rules/auditability"
             ]
           },
           {
-            "group": "Endpoint examples",
+            "group": "User Stories",
             "pages": [
-              "api-reference/endpoint/get",
-              "api-reference/endpoint/create",
-              "api-reference/endpoint/delete",
-              "api-reference/endpoint/webhook"
+              "user-stories/security-teams",
+              "user-stories/platform-teams",
+              "user-stories/product-teams"
+            ]
+          },
+          {
+            "group": "Real-world Implementations",
+            "pages": [
+              "implementations/overview",
+              "implementations/agent-systems",
+              "implementations/workflows",
+              "implementations/human-in-the-loop"
+            ]
+          },
+          {
+            "group": "Community",
+            "pages": [
+              "contribute",
+              "contributors"
+            ]
+          },
+          {
+            "group": "Research",
+            "pages": [
+              "research/overview",
+              "research/technical-paper"
             ]
           }
         ]
       }
     ],
-      "global": {
-    "anchors": [
-      {
-          "anchor": "Documentation",
-          "href": "https://mintlify.com/docs",
-          "icon": "book-open-cover"
+    "global": {
+      "anchors": [
+        {
+          "anchor": "GitHub",
+          "href": "https://github.com/herman-prod/docs",
+          "icon": "github"
         },
         {
-          "anchor": "Blog",
-          "href": "https://mintlify.com/blog",
-          "icon": "newspaper"
+          "anchor": "arXiv",
+          "href": "https://arxiv.org",
+          "icon": "file-text"
         }
       ]
     }
@@ -89,33 +105,26 @@
     "dark": "/logo/dark.svg"
   },
   "navbar": {
-    "links": [
-      {
-        "label": "Support",
-        "href": "mailto:hi@mintlify.com"
-      }
-    ],
     "primary": {
       "type": "button",
-      "label": "Go to Standard",
+      "label": "AARM Standard",
       "href": "https://aarm.dev"
     }
   },
   "contextual": {
     "options": [
-     "copy",
-     "view",
-     "chatgpt",
-     "claude",
-     "perplexity",
-     "mcp",
-     "cursor",
-     "vscode"
-   ]
+      "copy",
+      "view",
+      "chatgpt",
+      "claude",
+      "perplexity",
+      "cursor",
+      "vscode"
+    ]
   },
   "footer": {
     "socials": {
-      "github": "https://github.com/herman-prod/docs",
+      "github": "https://github.com/herman-prod/docs"
     }
   }
 }
