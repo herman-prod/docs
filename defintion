@@ -1,0 +1,192 @@
+---
+title: "What is AARM"
+description: "A runtime security system that intercepts, evaluates, and enforces policy on AI-driven actions before they execute."
+---
+
+## Definition
+
+**Autonomous Action Runtime Management (AARM)** is a system specification for securing AI-driven actions at runtime.
+```
+Agent ──► AARM ──► Tools
+            │
+            ▼
+        Receipts
+```
+
+AARM sits between the agent and the tools it invokes. Every action flows through AARM before execution.
+
+---
+
+## What It Does
+
+<Steps>
+  <Step title="Intercept">
+    Capture action requests before they reach tools
+  </Step>
+  <Step title="Evaluate">
+    Check against policy: who, what, to where, in what context
+  </Step>
+  <Step title="Enforce">
+    Allow, deny, modify, or require human approval
+  </Step>
+  <Step title="Record">
+    Generate signed receipt for every action
+  </Step>
+</Steps>
+
+---
+
+## Core Principle
+
+<Info>
+The security boundary for AI agents is **tool execution**, not model outputs.
+</Info>
+
+You can't reliably control what an agent *thinks*. You can control what it *does*.
+
+---
+
+## Trust Model
+
+| Component | Trust Level |
+|-----------|-------------|
+| AARM system | Trusted |
+| Agent / LLM | Untrusted |
+| User inputs | Untrusted |
+| Tool outputs | Untrusted |
+
+The agent isn't malicious—but it processes untrusted inputs. Treat it as potentially compromised.
+
+---
+
+## What AARM Is Not
+
+- **Not a prompt filter** — operates on actions, not text
+- **Not an observability tool** — prevents, not just observes
+- **Not a specific product** — it's a specification
+
+---
+
+## Next
+
+<CardGroup cols={2}>
+  <Card title="Specification" icon="file-lines" href="/specification">
+    Components, schemas, conformance requirements
+  </Card>
+  <Card title="Threat Model" icon="shield" href="/threats/overview">
+    What attacks AARM addresses
+  </Card>
+</CardGroup>
+
+## Components
+
+An AARM system has six components:
+
+| Component | Responsibility |
+|-----------|----------------|
+| **Action Mediation Layer** | Intercepts and normalizes action requests |
+| **Policy Decision Point** | Evaluates actions against policy |
+| **Policy Enforcement Point** | Implements decisions (block, allow, modify) |
+| **Approval Service** | Handles human-in-the-loop workflows |
+| **Receipt Generator** | Creates signed audit records |
+| **Telemetry Exporter** | Sends events to SIEM/SOAR |
+
+---
+
+## Action Schema
+```json
+{
+  "action_id": "act_7f8a9b2c",
+  "timestamp": "2025-01-15T10:30:00Z",
+  "tool": "email",
+  "operation": "send",
+  "parameters": {
+    "to": "recipient@example.com",
+    "subject": "Q4 Report"
+  },
+  "identity": {
+    "human": "alice@company.com",
+    "agent": "assistant-1",
+    "session": "sess_abc123"
+  },
+  "context": {
+    "prior_actions": ["db.query"],
+    "data_classification": ["PII"]
+  }
+}
+```
+
+---
+
+## Policy Schema
+```yaml
+rules:
+  - name: block-pii-external
+    match:
+      tool: email
+      operation: send
+      parameters.to: { external: true }
+      context.data_classification: PII
+    action: DENY
+    reason: "Cannot send PII externally"
+```
+
+---
+
+## Receipt Schema
+```json
+{
+  "receipt_id": "rct_3d4e5f6a",
+  "action_id": "act_7f8a9b2c",
+  "decision": "DENY",
+  "policy": "block-pii-external",
+  "reason": "Cannot send PII externally",
+  "timestamp": "2025-01-15T10:30:00Z",
+  "signature": "base64-signature"
+}
+```
+
+---
+
+## Conformance Requirements
+
+### Required (MUST)
+
+| ID | Requirement |
+|----|-------------|
+| R1 | Block actions before execution |
+| R2 | Validate parameters (type, range, allowlist) |
+| R3 | Support human approval workflows |
+| R4 | Generate signed, offline-verifiable receipts |
+| R5 | Bind actions to human + agent + session identity |
+
+### Recommended (SHOULD)
+
+| ID | Requirement |
+|----|-------------|
+| R6 | Just-in-time, scoped credentials |
+| R7 | Export telemetry to SIEM/SOAR |
+| R8 | Capture downstream effects when possible |
+
+---
+
+## Implementation Options
+
+| Architecture | Description | Bypass Resistance |
+|--------------|-------------|-------------------|
+| **Protocol Gateway** | Proxy for MCP/tool protocols | High |
+| **SDK Hook** | Embedded in agent runtime | Medium |
+| **Kernel/eBPF** | OS-level interception | Very High |
+
+---
+
+## Next
+
+<CardGroup cols={2}>
+  <Card title="Architectures" icon="sitemap" href="/architectures/overview">
+    Gateway, SDK, and eBPF approaches
+  </Card>
+  <Card title="Threat Model" icon="shield" href="/threats/overview">
+    What AARM defends against
+  </Card>
+</CardGroup>
