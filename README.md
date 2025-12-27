@@ -1,43 +1,81 @@
-# AARM Technical architecture reference
+# AARM — Autonomous Action Runtime Management
 
-Use the starter kit to get your docs deployed and ready to customize.
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![Docs](https://img.shields.io/badge/docs-aarm.dev-blue)](https://aarm.dev)
 
-Click the green **Use this template** button at the top of this repo to copy the Mintlify starter kit. The starter kit contains examples with
+**An open system specification for securing AI-driven actions at runtime.**
 
-- Guide pages
-- Navigation
-- Customizations
-- API reference pages
-- Use of popular components
+---
 
-**[Follow the full quickstart guide](https://starter.mintlify.com/quickstart)**
+## What is AARM?
 
-## Development
+As AI systems evolve from text generators into autonomous agents executing consequential actions—API calls, database mutations, financial transactions—the security boundary shifts from model outputs to **tool execution**.
 
-Install the [Mintlify CLI](https://www.npmjs.com/package/mint) to preview your documentation changes locally. To install, use the following command:
+AARM defines what a runtime security system must do:
 
+1. **Intercept** actions before execution
+2. **Evaluate** against policy
+3. **Enforce** decisions (allow / deny / modify / require approval)
+4. **Record** tamper-evident receipts
 ```
-npm i -g mint
-```
-
-Run the following command at the root of your documentation, where your `docs.json` is located:
-
-```
-mint dev
+Agent ──► AARM System ──► Tools/APIs
+              │
+              ▼
+        Action Receipts
 ```
 
-View your local preview at `http://localhost:3000`.
+---
 
-## Publishing changes
+## Why AARM?
 
-Install our GitHub app from your [dashboard](https://dashboard.mintlify.com/settings/organization/github-app) to propagate changes from your repo to your deployment. Changes are deployed to production automatically after pushing to the default branch.
+Traditional security doesn't address AI-driven actions:
 
-## Need help?
+- **SIEM** — observes *after* execution; can't prevent harm
+- **API gateways** — verify *who*, not *what* the action means
+- **Firewalls** — agents operate *inside* the perimeter
+- **Prompt guardrails** — filter text, not actions
+- **Human-in-the-loop** — doesn't scale; can be exploited
 
-### Troubleshooting
+AARM fills this gap with runtime enforcement at the action layer.
 
-- If your dev environment isn't running: Run `mint update` to ensure you have the most recent version of the CLI.
-- If a page loads as a 404: Make sure you are running in a folder with a valid `docs.json`.
+---
 
-### Resources
-- [Mintlify documentation](https://mintlify.com/docs)
+## Documentation
+
+**[aarm.dev](https://aarm.dev)**
+
+---
+
+## Quick Links
+
+| Resource | Description |
+|----------|-------------|
+| [Specification](https://aarm.dev/) | Problem, definition, components |
+| [Threat Model](https://aarm.dev/threats/overview) | What AARM defends against |
+| [Architectures](https://aarm.dev/architectures/overview) | Gateway, SDK, eBPF options |
+| [Conformance](https://aarm.dev/conformance/requirements) | R1–R8 requirements |
+| [Research Paper](https://aarm.dev/research/technical-paper) | IEEE-style technical paper |
+
+---
+
+## Contributing
+
+Contributions welcome. See [CONTRIBUTING.md](CONTRIBUTING.md).
+
+---
+
+## Local Development
+```bash
+npm i -g mint    # Install Mintlify CLI
+mint dev         # Run at http://localhost:3000
+```
+
+---
+
+## License
+
+[MIT](LICENSE)
+
+---
+
+<p align="center"><em>SIEM was built for events. AARM is built for actions.</em></p>
