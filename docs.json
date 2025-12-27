@@ -1,7 +1,7 @@
 {
   "$schema": "https://mintlify.com/docs.json",
   "theme": "mint",
-  "name": "AARM Reference Architecture",
+  "name": "AARM Specification",
   "colors": {
     "primary": "#0f172a",
     "light": "#07C983",
@@ -11,75 +11,81 @@
   "navigation": {
     "tabs": [
       {
-        "tab": "Reference",
+        "tab": "Specification",
         "groups": [
           {
             "group": "Overview",
             "pages": [
               "index",
-              "about",
-              "principles",
-              "scope-and-non-goals"
+              "problem",
+              "definition"
             ]
           },
           {
-            "group": "Core Concepts",
+            "group": "Threat Model",
             "pages": [
-              "concepts/aarm-overview",
-              "concepts/autonomous-actions",
-              "concepts/runtime-boundaries",
-              "concepts/control-vs-execution"
+              "threats/overview",
+              "threats/prompt-injection",
+              "threats/confused-deputy",
+              "threats/data-exfiltration"
             ]
           },
           {
-            "group": "Architecture",
+            "group": "System Components",
             "pages": [
-              "architecture/reference-architecture",
-              "architecture/control-plane",
-              "architecture/execution-plane",
-              "architecture/policy-evaluation",
-              "architecture/failure-modes"
+              "components/overview",
+              "components/action-mediation",
+              "components/policy-engine",
+              "components/approval-service",
+              "components/receipts"
             ]
           },
           {
-            "group": "Rules and Constraints",
+            "group": "Implementation Architectures",
             "pages": [
-              "rules/action-eligibility",
-              "rules/policies",
-              "rules/invariants",
-              "rules/escalation-and-shutdown",
-              "rules/auditability"
+              "architectures/overview",
+              "architectures/gateway",
+              "architectures/sdk",
+              "architectures/ebpf"
             ]
           },
           {
-            "group": "User Stories",
+            "group": "Conformance",
             "pages": [
-              "user-stories/security-teams",
-              "user-stories/platform-teams",
-              "user-stories/product-teams"
+              "conformance/requirements",
+              "conformance/testing"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Guides",
+        "groups": [
+          {
+            "group": "Getting Started",
+            "pages": [
+              "guides/quickstart",
+              "guides/first-policy"
             ]
           },
           {
-            "group": "Real-world Implementations",
+            "group": "Patterns",
             "pages": [
-              "implementations/overview",
-              "implementations/agent-systems",
-              "implementations/workflows",
-              "implementations/human-in-the-loop"
+              "patterns/mcp-gateway",
+              "patterns/approval-flows",
+              "patterns/receipt-signing"
             ]
-          },
+          }
+        ]
+      },
+      {
+        "tab": "Research",
+        "groups": [
           {
-            "group": "Community",
+            "group": "Papers",
             "pages": [
-              "contribute",
-              "essentials/contributions"
-            ]
-          },
-          {
-            "group": "Research",
-            "pages": [
-              "research/overview",
-              "research/technical-paper"
+              "research/technical-paper",
+              "research/references"
             ]
           }
         ]
@@ -89,13 +95,13 @@
       "anchors": [
         {
           "anchor": "GitHub",
-          "href": "https://github.com/herman-prod/docs",
+          "href": "https://github.com/aarm-spec/aarm",
           "icon": "github"
         },
         {
-          "anchor": "arXiv",
-          "href": "https://arxiv.org",
-          "icon": "file-text"
+          "anchor": "Paper (PDF)",
+          "href": "/research/aarm-paper.pdf",
+          "icon": "file-pdf"
         }
       ]
     }
@@ -107,20 +113,9 @@
   "navbar": {
     "primary": {
       "type": "button",
-      "label": "AARM Standard",
-      "href": "https://aarm.dev"
+      "label": "Contribute",
+      "href": "https://github.com/aarm-spec/aarm"
     }
-  },
-  "contextual": {
-    "options": [
-      "copy",
-      "view",
-      "chatgpt",
-      "claude",
-      "perplexity",
-      "cursor",
-      "vscode"
-    ]
   },
   "footer": {
     "socials": {
