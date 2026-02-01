@@ -1,0 +1,65 @@
+---
+title: "Technical Paper"
+description: "AARM: A System Specification for Securing AI-Driven Actions at Runtime"
+---
+
+## AARM Technical Paper
+
+The AARM specification is documented in a peer-reviewed technical paper that formalizes the problem, threat model, and system requirements.
+
+<Card title="AARM: Autonomous Action Runtime Management" icon="file-lines" href="/research/aarm-paper.pdf">
+  **A System Specification for Securing AI-Driven Actions at Runtime**
+  
+  Herman Errico (2025)
+</Card>
+
+---
+
+## Abstract
+
+Large language models have evolved from text generators into autonomous agents capable of executing consequential actions across enterprise systems. This evolution introduces a runtime security gap: existing security paradigms—SIEM, API gateways, firewalls, prompt guardrails—were not designed for AI-driven actions that are irreversible, execute at machine speed, compose into policy violations, and originate from potentially compromised orchestration layers.
+
+This paper introduces Autonomous Action Runtime Management (AARM), a system specification for securing AI-driven actions at runtime. AARM defines a security system that intercepts actions before execution, evaluates them against organizational policy, enforces authorization decisions, and records tamper-evident receipts for forensic reconstruction.
+
+We formalize the problem space, characterize threats including prompt injection, confused deputy attacks, and compositional data exfiltration, and propose three implementation architectures with distinct trust properties. We specify minimum conformance requirements enabling objective evaluation of AARM implementations.
+
+---
+
+## Paper Sections
+
+| Section | Description |
+|---------|-------------|
+| **1. Introduction** | The runtime security gap and why existing tools fail |
+| **2. Problem Formalization** | System model, action definition, security objectives |
+| **3. Threat Model** | Attack vectors, trust assumptions, attack lifecycle |
+| **4. Implementation Architectures** | Gateway, SDK, and eBPF approaches |
+| **5. Specification** | Components, schemas, data formats |
+| **6. Conformance Requirements** | R1–R8 requirements with verification |
+| **7. Evaluation Methodology** | Metrics and benchmarks |
+| **8. Open Challenges** | Composition problem, effect capture, semantic intent |
+
+---
+
+## Citation
+```bibtex
+
+## Citation
+```bibtex@article{errico2025aarm,
+title={Autonomous Action Runtime Management (AARM):
+A System Specification for Securing AI-Driven Actions at Runtime},
+author={Errico, Herman},
+year={2025}
+}
+
+---
+
+## Related Work
+
+<CardGroup cols={2}>
+  <Card title="MCP Security Paper" icon="shield" href="https://arxiv.org/abs/2511.20920">
+    Securing the Model Context Protocol: Risks, Controls, and Governance
+  </Card>
+  <Card title="References" icon="book" href="/research/references">
+    Full bibliography and related research
+  </Card>
+</CardGroup>
