@@ -1,0 +1,195 @@
+---
+title: "Quickstart"
+description: "Implement AARM patterns in your stack in under 30 minutes."
+---
+
+## Overview
+
+This guide walks through implementing basic AARM patterns. By the end, you'll have:
+
+1. A policy that blocks sensitive actions
+2. Action interception and evaluation
+3. Basic receipt generation
+
+---
+
+## Prerequisites
+
+- An AI agent that invokes tools (LangChain, OpenAI Agents, custom)
+- Python 3.10+ or Node.js 18+
+- 30 minutes
+
+---
+
+## Step 1: Define Your First Policy
+
+Create a policy file that blocks external email with sensitive data:
+```yaml
+# policies/email-policy.yaml
+policy:
+  id: block-pii-external
+  version: "1.0"
+
+rules:
+  - id: rule-001
+    name: block-sensitive-external-email
+    match:
+      tool: email
+      operation: send
+      parameters:
+        to: { external: true }
+      context:
+        data_classification: [PII, CONFIDENTIAL]
+    action: DENY
+    reason: "Cannot send sensitive data to external recipients"
+```
+
+---
+
+## Step 2: Create the Policy Engine
+
+A minimal policy engine that evaluates actions against rules:
+```python
+# aarm/policy_engine.py
+from dataclasses import dataclass
+from typing import Literal
+import yaml
+
+@dataclass
+class Decision:
+    result: Literal["ALLOW", "DENY", "MODIFY", "STEP_UP"]
+    policy_id: str | None = None
+    reason: str | None = None
+
+class PolicyEngine:
+    def __init__(self, policy_path: str):
+        with open(policy_path) as f:
+            self.policy = yaml.safe_load(f)
+    
+    def evaluate(self, action: dict) -> Decision:
+        for rule in self.policy.get("rules", []):
+            if self._matches(rule, action):
+                return Decision(
+                    result=rule["action"],
+                    policy_id=rule["id"],
+                    reason=rule.get("reason")
+                )
+        return Decision(result="ALLOW")
+    
+    def _matches(self, rule: dict, action: dict) -> bool:
+        match = rule.get("match", {})
+        
+        if match.get("tool") and match["tool"] != action.get("tool"):
+            return False
+        if match.get("operation") and match["operation"] != action.get("operation"):
+            return False
+        
+        # Add parameter and context matching as needed
+        return True
+```
+
+---
+
+## Step 3: Create the AARM Hook
+
+Wrap tool calls with AARM enforcement:
+```python
+# aarm/hook.py
+from functools import wraps
+from datetime import datetime
+import uuid
+
+from .policy_engine import PolicyEngine, Decision
+
+engine = PolicyEngine("policies/email-policy.yaml")
+
+def aarm_protected(tool_name: str):
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            # Build action
+            action = {
+                "action_id": str(uuid.uuid4()),
+                "timestamp": datetime.utcnow().isoformat(),
+                "tool": tool_name,
+                "operation": func.__name__,
+                "parameters": kwargs,
+                "identity": get_current_identity(),
+                "context": get_current_context()
+            }
+            
+            # Evaluate policy
+            decision = engine.evaluate(action)
+            
+            # Enforce
+            if decision.result == "DENY":
+                emit_receipt(action, decision, None)
+                raise PermissionError(f"Action denied: {decision.reason}")
+            
+            # Execute
+            result = func(*args, **kwargs)
+            
+            # Record
+            emit_receipt(action, decision, result)
+            return result
+        
+        return wrapper
+    return decorator
+
+def emit_receipt(action, decision, result):
+    receipt = {
+        "receipt_id": str(uuid.uuid4()),
+        "action": action,
+        "decision": {
+            "result": decision.result,
+            "policy_id": decision.policy_id,
+            "reason": decision.reason
+        },
+        "result": result,
+        "timestamp": datetime.utcnow().isoformat()
+    }
+    # Write to receipt store (file, database, etc.)
+    print(f"RECEIPT: {receipt}")
+```
+
+---
+
+## Step 4: Protect Your Tools
+
+Apply the decorator to your tool functions:
+```python
+# tools/email.py
+from aarm.hook import aarm_protected
+
+@aarm_protected("email")
+def send(to: str, subject: str, body: str):
+    """Send an email."""
+    # Your actual email sending logic
+    return {"status": "sent", "to": to}
+```
+
+---
+
+## Step 5: Test It
+```python
+# Test allowed action
+send(to="colleague@company.com", subject="Report", body="See attached")
+# → Executes successfully, receipt generated
+
+# Test denied action  
+send(to="external@gmail.com", subject="Data", body="Customer list...")
+# → PermissionError: Action denied: Cannot send sensitive data to external recipients
+```
+
+---
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Write Your First Policy" icon="scale-balanced" href="/guides/first-policy">
+    Deep dive into policy syntax and patterns
+  </Card>
+  <Card title="MCP Gateway Pattern" icon="server" href="/patterns/mcp-gateway">
+    Network-level enforcement for MCP tools
+  </Card>
+</CardGroup>
