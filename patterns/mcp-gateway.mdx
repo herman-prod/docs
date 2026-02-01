@@ -1,0 +1,203 @@
+---
+title: "MCP Gateway"
+description: "Implement AARM as a protocol-level gateway for MCP tools."
+---
+
+## Overview
+
+The MCP Gateway pattern implements AARM as a proxy server that intercepts all Model Context Protocol traffic. Agents connect to the gateway instead of directly to MCP servers.
+```
+Agent → AARM Gateway → MCP Server (Database)
+                    → MCP Server (Email)
+                    → MCP Server (Filesystem)
+```
+
+---
+
+## When to Use
+
+✅ **Good fit:**
+- MCP-based tool ecosystem
+- Network-level enforcement required
+- Minimal agent modification desired
+
+❌ **Not ideal:**
+- Non-MCP tools (use SDK pattern)
+- Need rich agent context for policies
+- Can't control network routing
+
+---
+
+## Implementation
+
+### Basic Gateway
+```python
+# gateway/server.py
+from mcp import MCPServer, ToolCallRequest, ToolCallResponse
+from aarm import PolicyEngine, ReceiptGenerator
+
+class AARMGateway(MCPServer):
+    def __init__(self, backend_url: str, policy_path: str):
+        self.backend = MCPClient(backend_url)
+        self.policy = PolicyEngine(policy_path)
+        self.receipts = ReceiptGenerator()
+    
+    async def handle_tool_call(self, request: ToolCallRequest) -> ToolCallResponse:
+        # Build action from MCP request
+        action = self.build_action(request)
+        
+        # Evaluate policy
+        decision = self.policy.evaluate(action)
+        
+        # Enforce
+        if decision.result == "DENY":
+            self.receipts.emit(action, decision, None)
+            return ToolCallResponse(
+                error=f"Policy denied: {decision.reason}"
+            )
+        
+        if decision.result == "STEP_UP":
+            approval = await self.request_approval(action)
+            if not approval.granted:
+                self.receipts.emit(action, decision, None)
+                return ToolCallResponse(error="Approval denied")
+        
+        # Forward to backend
+        result = await self.backend.call(request)
+        
+        # Record receipt
+        self.receipts.emit(action, decision, result)
+        
+        return result
+    
+    def build_action(self, request: ToolCallRequest) -> dict:
+        return {
+            "tool": request.tool_name,
+            "operation": request.method,
+            "parameters": request.params,
+            "identity": self.extract_identity(request),
+            "timestamp": datetime.utcnow().isoformat()
+        }
+```
+
+### Network Configuration
+
+Ensure agents can only reach MCP servers through the gateway:
+```yaml
+# kubernetes network policy
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: aarm-gateway-only
+spec:
+  podSelector:
+    matchLabels:
+      app: ai-agent
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              app: aarm-gateway
+      ports:
+        - port: 443
+```
+
+---
+
+## Configuration
+
+### Gateway Config
+```yaml
+# gateway/config.yaml
+server:
+  port: 8443
+  tls:
+    cert: /etc/aarm/tls.crt
+    key: /etc/aarm/tls.key
+
+backends:
+  - name: database
+    url: mcp://db-server:8080
+  - name: email
+    url: mcp://email-server:8080
+  - name: filesystem
+    url: mcp://fs-server:8080
+
+policy:
+  path: /etc/aarm/policies/
+  reload_interval: 60s
+
+receipts:
+  store: postgresql://receipts-db/aarm
+  signing_key: /etc/aarm/signing.key
+```
+
+---
+
+## Extracting Identity
+
+The gateway must extract identity from MCP requests:
+```python
+def extract_identity(self, request: ToolCallRequest) -> dict:
+    # From MCP headers/metadata
+    return {
+        "human": request.metadata.get("x-user-id"),
+        "service": request.metadata.get("x-service-id"),
+        "session": request.metadata.get("x-session-id"),
+    }
+```
+
+Configure your agent to include identity headers:
+```python
+# Agent configuration
+mcp_client = MCPClient(
+    url="https://aarm-gateway.internal",
+    headers={
+        "x-user-id": current_user.id,
+        "x-service-id": "agent-service",
+        "x-session-id": session.id
+    }
+)
+```
+
+---
+
+## High Availability
+
+Deploy multiple gateway instances behind a load balancer:
+```yaml
+# kubernetes deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: aarm-gateway
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: aarm-gateway
+  template:
+    spec:
+      containers:
+        - name: gateway
+          image: aarm/gateway:latest
+          ports:
+            - containerPort: 8443
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8443
+```
+
+---
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Approval Flows" icon="user-check" href="/patterns/approval-flows">
+    Add human approval for high-risk actions
+  </Card>
+  <Card title="Receipt Signing" icon="signature" href="/patterns/receipt-signing">
+    Cryptographic audit trails
+  </Card>
+</CardGroup>
