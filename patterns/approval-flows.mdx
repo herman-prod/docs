@@ -1,0 +1,249 @@
+---
+title: "Approval Flows"
+description: "Implement step-up authorization for high-risk actions."
+---
+
+## Overview
+
+Step-up authorization pauses action execution until a human approves. Use it for:
+
+- Destructive operations (delete, drop)
+- High-value transactions
+- External data transfers
+- Privilege escalation
+
+---
+
+## Basic Flow
+```
+Agent requests action
+        ↓
+Policy evaluates → STEP_UP
+        ↓
+Execution blocks
+        ↓
+Approval request sent to approvers
+        ↓
+Approver reviews and decides
+        ↓
+   ┌────┴────┐
+Approved    Denied
+   ↓           ↓
+Execute     Block
+   ↓           ↓
+Receipt     Receipt
+```
+
+---
+
+## Implementation
+
+### Approval Service
+```python
+# aarm/approval.py
+from dataclasses import dataclass
+from datetime import datetime, timedelta
+import asyncio
+
+@dataclass
+class ApprovalRequest:
+    id: str
+    action: dict
+    approvers: list[str]
+    timeout: int
+    created_at: datetime
+
+@dataclass
+class ApprovalResult:
+    granted: bool
+    approver: str | None
+    reason: str | None
+    timestamp: datetime
+
+class ApprovalService:
+    def __init__(self, notifier, store):
+        self.notifier = notifier  # Slack, email, etc.
+        self.store = store        # Database for pending requests
+    
+    async def request_approval(
+        self, 
+        action: dict, 
+        approvers: list[str],
+        timeout: int = 3600
+    ) -> ApprovalResult:
+        # Create request
+        request = ApprovalRequest(
+            id=generate_id(),
+            action=action,
+            approvers=approvers,
+            timeout=timeout,
+            created_at=datetime.utcnow()
+        )
+        
+        # Store pending request
+        await self.store.save(request)
+        
+        # Notify approvers
+        await self.notifier.send(
+            to=approvers,
+            message=self.format_approval_request(request)
+        )
+        
+        # Wait for decision or timeout
+        try:
+            result = await asyncio.wait_for(
+                self.wait_for_decision(request.id),
+                timeout=timeout
+            )
+            return result
+        except asyncio.TimeoutError:
+            return ApprovalResult(
+                granted=False,
+                approver=None,
+                reason="Approval timeout",
+                timestamp=datetime.utcnow()
+            )
+    
+    async def approve(self, request_id: str, approver: str, reason: str = None):
+        """Called when approver grants approval."""
+        await self.store.set_decision(
+            request_id, 
+            granted=True, 
+            approver=approver,
+            reason=reason
+        )
+    
+    async def deny(self, request_id: str, approver: str, reason: str):
+        """Called when approver denies."""
+        await self.store.set_decision(
+            request_id,
+            granted=False,
+            approver=approver,
+            reason=reason
+        )
+```
+
+### Slack Integration
+```python
+# aarm/notifiers/slack.py
+from slack_sdk import WebClient
+
+class SlackNotifier:
+    def __init__(self, token: str):
+        self.client = WebClient(token=token)
+    
+    async def send(self, to: list[str], message: dict):
+        for approver in to:
+            await self.client.chat_postMessage(
+                channel=self.get_channel(approver),
+                blocks=[
+                    {
+                        "type": "header",
+                        "text": {"type": "plain_text", "text": "🔐 Action Approval Required"}
+                    },
+                    {
+                        "type": "section",
+                        "text": {
+                            "type": "mrkdwn",
+                            "text": f"*Tool:* {message['tool']}\n*Operation:* {message['operation']}\n*User:* {message['user']}"
+                        }
+                    },
+                    {
+                        "type": "section",
+                        "text": {
+                            "type": "mrkdwn", 
+                            "text": f"*Parameters:*\n```{message['parameters']}```"
+                        }
+                    },
+                    {
+                        "type": "actions",
+                        "elements": [
+                            {
+                                "type": "button",
+                                "text": {"type": "plain_text", "text": "✅ Approve"},
+                                "style": "primary",
+                                "action_id": f"approve_{message['request_id']}"
+                            },
+                            {
+                                "type": "button",
+                                "text": {"type": "plain_text", "text": "❌ Deny"},
+                                "style": "danger",
+                                "action_id": f"deny_{message['request_id']}"
+                            }
+                        ]
+                    }
+                ]
+            )
+```
+
+---
+
+## Policy Configuration
+```yaml
+rules:
+  - id: approve-destructive-db
+    name: Require approval for destructive database operations
+    match:
+      tool: database
+      operation: [delete, drop, truncate]
+    action: STEP_UP
+    approvers:
+      - database-owner
+      - security-team
+    timeout: 3600          # 1 hour
+    timeout_action: DENY   # Default if no response
+
+  - id: approve-large-payment
+    name: Require approval for payments over $10k
+    match:
+      tool: payment
+      operation: transfer
+      parameters:
+        amount: { gt: 10000 }
+    action: STEP_UP
+    approvers:
+      - finance-manager
+      - cfo
+    escalation:
+      after: 1800          # 30 minutes
+      to: [cfo]
+```
+
+---
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Keep context visible" icon="eye">
+    Show approvers everything they need: the action, parameters, user, session history, and why approval is required.
+  </Accordion>
+  
+  <Accordion title="Set appropriate timeouts" icon="clock">
+    Too short → legitimate actions timeout. Too long → blocks workflows. Start with 1 hour, adjust based on data.
+  </Accordion>
+  
+  <Accordion title="Default to DENY on timeout" icon="shield">
+    Fail-closed is safer. If approvers don't respond, the action shouldn't execute.
+  </Accordion>
+  
+  <Accordion title="Support escalation" icon="arrow-up">
+    If primary approvers don't respond, escalate to backup approvers before timeout.
+  </Accordion>
+  
+  <Accordion title="Prevent approval fatigue" icon="battery-low">
+    Too many approval requests → rubber-stamping. Reserve STEP_UP for genuinely high-risk actions.
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Receipt Signing" icon="signature" href="/patterns/receipt-signing">
+    Cryptographic audit trails
+  </Card>
+  <Card title="Specification" icon="file-lines" href="/specification">
+    Full conformance requirements
+  </Card>
+</CardGroup>
