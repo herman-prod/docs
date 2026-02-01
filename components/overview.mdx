@@ -1,0 +1,96 @@
+---
+title: Components Overview
+description: The six components that make up an AARM-compliant system.
+---
+
+## Architecture
+
+An AARM system consists of six components working together:
+```
+┌─────────────────────────────────────────────────────────────┐
+│                       AARM SYSTEM                           │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│   ┌──────────────────┐      ┌──────────────────┐           │
+│   │ Action Mediation │ ───► │ Policy Decision  │           │
+│   │ Layer (AML)      │      │ Point (PDP)      │           │
+│   └──────────────────┘      └────────┬─────────┘           │
+│                                      │                      │
+│                                      ▼                      │
+│                             ┌──────────────────┐           │
+│                             │ Policy Enforce-  │           │
+│                             │ ment Point (PEP) │           │
+│                             └────────┬─────────┘           │
+│                                      │                      │
+│         ┌────────────────────────────┼────────────────┐    │
+│         ▼                            ▼                ▼    │
+│  ┌─────────────┐          ┌──────────────┐    ┌─────────┐ │
+│  │  Approval   │          │   Receipt    │    │Telemetry│ │
+│  │  Service    │          │  Generator   │    │Exporter │ │
+│  └─────────────┘          └──────────────┘    └─────────┘ │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## Components
+
+<CardGroup cols={2}>
+  <Card title="Action Mediation Layer" icon="filter" href="/components/action-mediation">
+    Intercepts tool invocations and normalizes to canonical schema
+  </Card>
+  <Card title="Policy Engine" icon="scale-balanced" href="/components/policy-engine">
+    Evaluates actions and enforces decisions
+  </Card>
+  <Card title="Approval Service" icon="user-check" href="/components/approval-service">
+    Human-in-the-loop for high-risk actions
+  </Card>
+  <Card title="Receipt Generator" icon="receipt" href="/components/receipts">
+    Cryptographically signed audit records
+  </Card>
+</CardGroup>
+
+---
+
+## Data Flow
+
+<Steps>
+  <Step title="Intercept">
+    Action Mediation Layer captures tool invocation from agent
+  </Step>
+  <Step title="Normalize">
+    AML converts protocol-specific request to AARM action schema
+  </Step>
+  <Step title="Evaluate">
+    Policy Decision Point matches action against rules
+  </Step>
+  <Step title="Enforce">
+    Policy Enforcement Point implements decision (allow/deny/modify/step-up)
+  </Step>
+  <Step title="Approve">
+    If STEP_UP, Approval Service routes to human approvers
+  </Step>
+  <Step title="Execute">
+    If allowed, action forwards to tool
+  </Step>
+  <Step title="Record">
+    Receipt Generator creates signed audit record
+  </Step>
+  <Step title="Export">
+    Telemetry Exporter sends events to SIEM/SOAR
+  </Step>
+</Steps>
+
+---
+
+## Component Responsibilities
+
+| Component | Input | Output | Required |
+|-----------|-------|--------|----------|
+| Action Mediation | Protocol request | AARM Action | Yes |
+| Policy Decision Point | Action | Decision | Yes |
+| Policy Enforcement Point | Action + Decision | Enforced result | Yes |
+| Approval Service | Action | Approval result | Yes |
+| Receipt Generator | Action + Decision + Result | Signed receipt | Yes |
+| Telemetry Exporter | Receipt | SIEM events | Recommended |
