@@ -1,6 +1,6 @@
-markdown---
-title: "References"
-description: "Research literature on AI agent security, runtime protection, and related topics."
+---
+title: References
+description: Research literature on AI agent security, runtime protection, and related topics.
 ---
 
 ## Core References
@@ -9,30 +9,26 @@ Research that directly informs the AARM specification.
 
 ### MCP Security
 
-<Card title="Securing the Model Context Protocol (MCP): Risks, Controls, and Governance" icon="shield" href="https://arxiv.org/abs/2511.20920">
-  **Herman Errico, Jiquan Ngiam, Shanita Sojan**
-  
-  Systematization of security risks in the MCP ecosystem, including threat taxonomy and governance controls.
+<Card title="Securing the Model Context Protocol" icon="shield" href="https://arxiv.org/abs/2511.20920">
+  Herman Errico, Jiquan Ngiam, Shanita Sojan — Security risks in the MCP ecosystem, threat taxonomy, and governance controls.
 </Card>
 
 ---
 
 ## Agent Security Surveys
 
-Comprehensive surveys on LLM agent security and safety.
-
 <CardGroup cols={2}>
-  <Card title="The Rise and Potential of LLM-Based Agents" icon="robot" href="https://arxiv.org/abs/2309.07864">
-    Xi et al. (2024) — Survey of LLM agent architectures and capabilities
+  <Card title="Rise of LLM-Based Agents" icon="robot" href="https://arxiv.org/abs/2309.07864">
+    Xi et al. (2024)
   </Card>
   <Card title="LLM Agent Security Survey" icon="shield-halved" href="https://arxiv.org/abs/2407.19354">
-    Ruan et al. (2024) — Security and privacy threats with case studies
+    Ruan et al. (2024)
   </Card>
   <Card title="Security of AI Agents" icon="lock" href="https://arxiv.org/abs/2406.08689">
-    Wu et al. (2024) — System security perspective on agent vulnerabilities
+    Wu et al. (2024)
   </Card>
-  <Card title="Autonomy-Induced Security Risks" icon="warning" href="https://arxiv.org/abs/2506.23844">
-    Chen et al. (2025) — Risks from increased agent autonomy
+  <Card title="Autonomy-Induced Risks" icon="triangle-exclamation" href="https://arxiv.org/abs/2506.23844">
+    Chen et al. (2025)
   </Card>
 </CardGroup>
 
@@ -40,43 +36,37 @@ Comprehensive surveys on LLM agent security and safety.
 
 ## Prompt Injection Research
 
-Research on prompt injection attacks and defenses.
-
 <CardGroup cols={2}>
   <Card title="Indirect Prompt Injection" icon="syringe" href="https://arxiv.org/abs/2302.12173">
-    Greshake et al. (2023) — Compromising LLM applications via retrieved content
+    Greshake et al. (2023)
   </Card>
   <Card title="HackAPrompt" icon="flag" href="https://arxiv.org/abs/2311.16119">
-    Perez et al. (2023) — Global prompt hacking competition findings
+    Perez et al. (2023)
   </Card>
   <Card title="Formalizing Prompt Injection" icon="flask" href="https://www.usenix.org/conference/usenixsecurity24">
-    Liu et al. (2024) — USENIX Security benchmark for injection attacks
+    Liu et al. (2024)
   </Card>
   <Card title="AgentDojo" icon="vial" href="https://arxiv.org/abs/2406.13352">
-    Debenedetti et al. (2024) — Dynamic environment for evaluating agent attacks
+    Debenedetti et al. (2024)
   </Card>
 </CardGroup>
 
 ---
 
-## Agent Benchmarks and Evaluation
-
-Tools for evaluating agent safety and security.
+## Benchmarks
 
 <CardGroup cols={2}>
   <Card title="ToolEmu" icon="hammer" href="https://arxiv.org/abs/2309.15817">
-    Ye et al. (2024) — Emulator for testing risky agent failures
+    Ye et al. (2024)
   </Card>
   <Card title="AgentBench" icon="chart-bar" href="https://arxiv.org/abs/2308.03688">
-    Liu et al. (2023) — Benchmark for evaluating LLM agents
+    Liu et al. (2023)
   </Card>
 </CardGroup>
 
 ---
 
 ## Industry Guidance
-
-Vendor and standards body guidance on AI agent security.
 
 <CardGroup cols={2}>
   <Card title="OWASP LLM Top 10" icon="list-ol" href="https://owasp.org/www-project-top-10-for-large-language-model-applications/">
@@ -85,45 +75,26 @@ Vendor and standards body guidance on AI agent security.
   <Card title="NIST AI RMF" icon="landmark" href="https://www.nist.gov/itl/ai-risk-management-framework">
     AI Risk Management Framework
   </Card>
-  <Card title="Google: Securing AI Agents" icon="google" href="https://cloud.google.com/blog/products/identity-security/cloud-ciso-perspectives-how-google-secures-ai-agents">
-    Google Cloud CISO perspectives on agent security
+  <Card title="Google: Securing AI Agents" icon="cloud" href="https://cloud.google.com/blog/products/identity-security/cloud-ciso-perspectives-how-google-secures-ai-agents">
+    Google Cloud CISO perspectives
   </Card>
-  <Card title="AWS Agentic Security Matrix" icon="aws" href="https://aws.amazon.com/blogs/security/">
-    Framework for securing autonomous AI systems
+  <Card title="MCP Specification" icon="plug" href="https://modelcontextprotocol.io">
+    Model Context Protocol docs
   </Card>
 </CardGroup>
 
 ---
 
-## Foundational Security Concepts
-
-Classic security research that informs AARM design.
+## Foundational Security
 
 | Paper | Author | Year | Relevance |
 |-------|--------|------|-----------|
 | The Confused Deputy | Hardy | 1988 | Agent authority misuse |
 | Robust Composition | Miller | 2006 | Capability-based security |
-| Zero Trust Architecture | Kindervag | 2010 | Perimeter-less security model |
-| SIEM Definition | Gartner | 2005 | Event-based security monitoring |
-
----
-
-## Implementation Technologies
-
-<CardGroup cols={3}>
-  <Card title="Model Context Protocol" icon="plug" href="https://modelcontextprotocol.io">
-    Anthropic's protocol for LLM tool integration
-  </Card>
-  <Card title="Open Policy Agent" icon="scale-balanced" href="https://www.openpolicyagent.org">
-    Policy-as-code for cloud native environments
-  </Card>
-  <Card title="OCSF" icon="diagram-project" href="https://schema.ocsf.io">
-    Open Cybersecurity Schema Framework
-  </Card>
-</CardGroup>
+| Zero Trust Architecture | Kindervag | 2010 | Perimeter-less security |
 
 ---
 
 ## Contribute
 
-Missing a relevant paper? [Open an issue](https://github.com/aarm-spec/aarm/issues) or submit a PR to add it.
+Missing a paper? Open an issue on GitHub.
