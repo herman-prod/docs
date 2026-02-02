@@ -1,22 +1,24 @@
 ---
-title: "Introduction"
-description: "AARM (Autonomous Action Runtime Management) is an open system specification for securing AI-driven actions at runtime—intercepting, authorizing, and auditing autonomous actions before they execute."
+title: Introduction
+description: "AARM is an open system specification for securing AI-driven actions at runtime. Build systems that intercept, authorize, and audit autonomous actions before they execute."
 ---
 
 ## What is AARM?
 
-**Autonomous Action Runtime Management (AARM)** is a system specification for securing AI-driven actions at runtime. As AI systems evolve from text generators into autonomous agents that execute consequential actions—API calls, database mutations, file operations, financial transactions, credential changes—a new security boundary emerges: **the action layer**.
+**Autonomous Action Runtime Management (AARM)** is an open system specification for securing AI-driven actions at runtime. It defines what a runtime security system must do—not how to build it.
 
-AARM defines what a runtime security system must do to protect organizations from the unique risks of agentic AI:
+AARM is not a product, library, or service you install. It is a specification that describes the components, behaviors, and conformance requirements for systems that secure AI agents. You use AARM to **design and build** your own runtime security system, or to **evaluate** whether existing solutions meet the specification.
 
-<Columns cols={2}>
-  <Card title="Read the Specification" icon="book" href="/specification">
-    Problem formalization, threat model, and conformance requirements.
+<CardGroup cols={2}>
+  <Card title="Understand the Problem" icon="circle-exclamation" href="/problem">
+    Why existing security tools fail for AI-driven actions
   </Card>
-  <Card title="Quickstart" icon="rocket" href="/quickstart">
-    Implement AARM patterns in your stack in under an hour.
+  <Card title="Read the Definition" icon="book" href="/definition">
+    What AARM is (and is not)
   </Card>
-</Columns>
+</CardGroup>
+
+---
 
 ## The Runtime Security Gap
 
@@ -35,15 +37,17 @@ Existing tools don't solve this:
 - **API gateways** verify *who* is calling, not *what* the action means
 - **Firewalls** protect perimeters—but agents operate *inside* with legitimate credentials
 - **Prompt guardrails** filter text, not actions—and are easily bypassed
-- **Human-in-the-loop** doesn't scale, and [can itself be exploited](https://checkmarx.com/blog/lies-in-the-loop)
+- **Human-in-the-loop** doesn't scale, and can itself be exploited
 
-<Card title="AARM vs. SIEM" icon="shield" horizontal href="/concepts/aarm-vs-siem">
-  SIEM was built for events. AARM is built for actions.
+<Card title="Full Problem Analysis" icon="magnifying-glass" href="/problem">
+  Deep dive into the runtime security gap and why action-level control is required
 </Card>
 
-## What AARM Does
+---
 
-AARM defines a runtime security system that:
+## What an AARM System Does
+
+A system conforming to AARM:
 
 1. **Intercepts** AI-driven actions before execution
 2. **Evaluates** them against organizational policy
@@ -65,86 +69,134 @@ AARM defines a runtime security system that:
                             └─────────────────┘
 ```
 
-## Core Components
+---
+
+## Building an AARM-Compliant System
+
+To build a system that conforms to AARM, you need to:
+
+<Steps>
+  <Step title="Understand the Threats">
+    Study the [threat model](/threats/overview) to understand what attacks your system must defend against: prompt injection, confused deputy, data exfiltration.
+  </Step>
+  <Step title="Implement the Components">
+    Build the [six system components](/components/overview): action mediation, policy engine, enforcement point, approval service, receipt generator, and telemetry exporter.
+  </Step>
+  <Step title="Choose an Architecture">
+    Select an [implementation architecture](/architectures/overview) based on your trust requirements: protocol gateway, SDK instrumentation, or kernel-level eBPF.
+  </Step>
+  <Step title="Verify Conformance">
+    Test your implementation against the [conformance requirements](/conformance/requirements) (R1–R8) using the [testing protocol](/conformance/testing).
+  </Step>
+</Steps>
+
+---
+
+## Specification Overview
+
+### Threat Model
+
+AARM addresses specific attack vectors unique to AI-driven actions:
+
+<CardGroup cols={3}>
+  <Card title="Prompt Injection" icon="syringe" href="/threats/prompt-injection">
+    Malicious instructions hijack agent behavior
+  </Card>
+  <Card title="Confused Deputy" icon="masks-theater" href="/threats/confused-deputy">
+    Agents misuse legitimate credentials under manipulation
+  </Card>
+  <Card title="Data Exfiltration" icon="file-export" href="/threats/data-exfiltration">
+    Compositional attacks extract sensitive data
+  </Card>
+</CardGroup>
+
+### System Components
 
 An AARM-compliant system implements these components:
 
-<Columns cols={3}>
-  <Card title="Action Mediation" icon="filter" href="/specification/components#action-mediation">
-    Intercepts tool invocations, normalizes to canonical schema.
+<CardGroup cols={2}>
+  <Card title="Action Mediation" icon="filter" href="/components/action-mediation">
+    Intercepts tool invocations and normalizes to canonical schema
   </Card>
-  <Card title="Policy Decision Point" icon="scale-balanced" href="/specification/components#pdp">
-    Evaluates actions against policy; returns allow/deny/modify/step-up.
+  <Card title="Policy Engine" icon="scale-balanced" href="/components/policy-engine">
+    Evaluates actions against policy; returns allow/deny/modify/step-up
   </Card>
-  <Card title="Policy Enforcement" icon="lock" href="/specification/components#pep">
-    Implements decisions: blocking, parameter rewriting, rate limiting.
+  <Card title="Approval Service" icon="user-check" href="/components/approval-service">
+    Human-in-the-loop for high-risk actions with timeout and routing
   </Card>
-  <Card title="Approval Service" icon="user-check" href="/specification/components#approvals">
-    Human-in-the-loop for high-risk actions with timeout and routing.
+  <Card title="Receipt Generator" icon="receipt" href="/components/receipts">
+    Cryptographically signed records binding action, decision, and outcome
   </Card>
-  <Card title="Receipt Generator" icon="receipt" href="/specification/components#receipts">
-    Cryptographically signed records binding action, decision, and outcome.
-  </Card>
-  <Card title="Telemetry Export" icon="chart-line" href="/specification/components#telemetry">
-    Structured events for SIEM/SOAR integration and compliance.
-  </Card>
-</Columns>
+</CardGroup>
 
-## Implementation Architectures
+<Card title="Components Overview" icon="sitemap" href="/components/overview">
+  Full component architecture with data flow diagrams
+</Card>
+
+### Implementation Architectures
 
 AARM can be implemented through three architectures, each with distinct trust properties:
 
-<Columns cols={3}>
-  <Card title="Protocol Gateway" icon="server" href="/architectures/gateway">
-    Proxy for MCP or tool protocols. High bypass resistance, low integration effort.
-  </Card>
-  <Card title="SDK / Instrumentation" icon="code" href="/architectures/sdk">
-    Embedded in agent runtime. Maximum context access, requires framework integration.
-  </Card>
-  <Card title="Kernel / eBPF" icon="microchip" href="/architectures/ebpf">
-    OS-level syscall interception. Cannot be bypassed by user-space code.
-  </Card>
-</Columns>
+| Architecture | Enforcement Point | Bypass Resistance | Integration Effort |
+|--------------|-------------------|-------------------|-------------------|
+| [Protocol Gateway](/architectures/gateway) | Network | High | Low |
+| [SDK / Instrumentation](/architectures/sdk) | Application | Medium | Medium |
+| [Kernel / eBPF](/architectures/ebpf) | Kernel | Very High | High |
 
 For defense in depth, organizations may deploy multiple architectures in layers.
 
-## Conformance Requirements
-
-To prevent category dilution, AARM defines minimum requirements for compliant systems:
-
-| Requirement | Level | Description |
-|-------------|-------|-------------|
-| **R1: In-line Authorization** | MUST | Block actions before execution based on policy |
-| **R2: Parameter Validation** | MUST | Validate/constrain parameters (types, ranges, allowlists) |
-| **R3: Step-up Authorization** | MUST | Support approval workflows for high-risk actions |
-| **R4: Tamper-evident Receipts** | MUST | Signed records verifiable offline |
-| **R5: Identity Binding** | MUST | Bind actions to human, service, and session identities |
-| **R6: Least Privilege** | SHOULD | Just-in-time credentials, scoped tokens |
-| **R7: Telemetry Export** | SHOULD | Structured events compatible with SIEM/SOAR |
-| **R8: Effect Capture** | SHOULD | Record downstream state changes when feasible |
-
-<Card title="Full Conformance Requirements" icon="clipboard-check" horizontal href="/specification/conformance">
-  Detailed requirements with test criteria for each.
+<Card title="Architecture Selection Guide" icon="compass" href="/architectures/overview">
+  When to choose each architecture based on your requirements
 </Card>
 
-## Start Building
+### Conformance Requirements
 
-<Columns cols={2}>
-  <Card title="Reference Architecture" icon="sitemap" href="/specification/architecture">
-    Canonical components, data flows, and deployment patterns.
-  </Card>
-  <Card title="Policy Model" icon="scale-balanced" href="/specification/policy">
-    Action-centric policies: tool, operation, identity, context, decision.
-  </Card>
-  <Card title="Threat Model" icon="bug" href="/specification/threats">
-    Prompt injection, confused deputy, data exfiltration, memory poisoning.
-  </Card>
-  <Card title="Patterns & Recipes" icon="layer-group" href="/patterns">
-    Practical implementations: MCP gateway, approval flows, receipt signing.
-  </Card>
-</Columns>
+To claim AARM compliance, a system must satisfy these requirements:
 
-## Why Open Specification?
+| ID | Level | Requirement |
+|----|-------|-------------|
+| R1 | MUST | Block actions before execution based on policy |
+| R2 | MUST | Validate parameters against type, range, and pattern constraints |
+| R3 | MUST | Support human approval workflows with timeout handling |
+| R4 | MUST | Generate cryptographically signed, offline-verifiable receipts |
+| R5 | MUST | Bind actions to human, service, agent, and session identity |
+| R6 | SHOULD | Enforce least privilege through scoped, just-in-time credentials |
+| R7 | SHOULD | Export structured telemetry to security platforms |
+| R8 | SHOULD | Capture downstream effects when tools support it |
+
+<CardGroup cols={2}>
+  <Card title="Full Requirements" icon="clipboard-check" href="/conformance/requirements">
+    Detailed requirements with verification criteria
+  </Card>
+  <Card title="Testing Protocol" icon="flask-vial" href="/conformance/testing">
+    How to verify your implementation conforms
+  </Card>
+</CardGroup>
+
+---
+
+## Guides and Patterns
+
+Once you understand the specification, the Guides tab provides practical implementation help:
+
+<CardGroup cols={2}>
+  <Card title="Quickstart" icon="rocket" href="/guides/quickstart">
+    Implement basic AARM patterns step by step
+  </Card>
+  <Card title="First Policy" icon="scale-balanced" href="/guides/first-policy">
+    Learn policy syntax by writing common rules
+  </Card>
+  <Card title="MCP Gateway Pattern" icon="server" href="/patterns/mcp-gateway">
+    Build a protocol-level proxy for MCP tools
+  </Card>
+  <Card title="Approval Flows" icon="user-check" href="/patterns/approval-flows">
+    Implement step-up authorization with Slack/email
+  </Card>
+</CardGroup>
+
+---
+
+## Why an Open Specification?
 
 The market for AI agent security is emerging rapidly, with multiple vendors building proprietary solutions. AARM aims to:
 
@@ -153,17 +205,29 @@ The market for AI agent security is emerging rapidly, with multiple vendors buil
 - **Preserve buyer choice** by defining what systems must do, not how they must be built
 - **Accelerate adoption** by providing implementation guidance, not just principles
 
-The goal is not to build AARM, but to define what an AARM system must do—enabling the market to compete on implementation quality rather than category definition.
+The goal is not to build AARM, but to define what an AARM-conformant system must do—enabling the market to compete on implementation quality rather than category definition.
+
+---
+
+## Research
+
+AARM is grounded in academic research on AI agent security:
+
+<CardGroup cols={2}>
+  <Card title="Technical Paper" icon="file-lines" href="/research/technical-paper">
+    Full specification paper with formal definitions
+  </Card>
+  <Card title="References" icon="book" href="/research/references">
+    Research literature on agent security, prompt injection, and runtime protection
+  </Card>
+</CardGroup>
+
+---
 
 ## Contribute
 
-AARM is an **open specification**. If you're building agentic systems, tool servers, or security layers, you can help shape the standard.
+AARM is an **open specification**. We welcome contributions from security researchers, agent framework developers, and enterprise practitioners.
 
-<Columns cols={2}>
-  <Card title="Contributing Guide" icon="code-branch" href="/contributing">
-    Propose changes, add patterns, share implementation notes.
-  </Card>
-  <Card title="GitHub Repository" icon="github" href="https://github.com/aarm-spec/aarm">
-    Specification source, issues, and discussions.
-  </Card>
-</Columns>
+<Card title="GitHub Repository" icon="github" href="https://github.com/aarm-spec/aarm">
+  Specification source, issues, and discussions
+</Card>
