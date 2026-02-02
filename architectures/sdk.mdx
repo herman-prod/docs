@@ -1,0 +1,84 @@
+---
+title: SDK / Instrumentation
+description: AARM embedded within the agent runtime as middleware or hooks.
+---
+
+## Overview
+
+The SDK architecture embeds AARM within the agent process:
+```
+┌─────────────────────────────┐
+│       Agent Runtime         │
+├─────────────────────────────┤
+│  Agent Logic                │
+│       ↓                     │
+│  AARM Hook  ←→ Policy Svc   │
+│       ↓                     │
+│  Tool Calls                 │
+└─────────────────────────────┘
+```
+
+---
+
+## Properties
+
+| Property | Value |
+|----------|-------|
+| Enforcement point | Application |
+| Bypass resistance | Medium |
+| Semantic visibility | Very High |
+| Integration effort | Medium |
+| Context access | Full (agent state, history) |
+
+---
+
+## Implementation
+```python
+def aarm_protected(tool_name: str):
+    def decorator(func):
+        @wraps(func)
+        async def wrapper(*args, **kwargs):
+            action = Action(
+                tool=tool_name,
+                operation=func.__name__,
+                parameters=kwargs,
+                identity=get_identity(),
+                context=get_agent_context()  # Full access
+            )
+            
+            decision = await policy_service.evaluate(action)
+            
+            if decision.result == "DENY":
+                emit_receipt(action, decision, None)
+                raise PolicyDenied(decision.reason)
+            
+            result = await func(*args, **kwargs)
+            emit_receipt(action, decision, result)
+            return result
+        return wrapper
+    return decorator
+
+@aarm_protected("email")
+async def send_email(to: str, subject: str, body: str):
+    ...
+```
+
+---
+
+## Framework Integration
+
+| Framework | Integration Point |
+|-----------|-------------------|
+| LangChain | Callback handlers |
+| OpenAI Agents | Middleware |
+| AutoGPT | Plugin wrappers |
+| Custom | Decorator pattern |
+
+---
+
+## Limitations
+
+- Requires code changes
+- Bypass risk if tools called directly
+- Coupled to framework versions
+- Must instrument all tool paths
