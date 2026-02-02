@@ -1,0 +1,86 @@
+---
+title: Architectures Overview
+description: Three implementation approaches with different trust and integration properties.
+---
+
+## Overview
+
+AARM can be implemented through three architectures:
+
+| Architecture | Enforcement Point | Bypass Resistance | Integration |
+|--------------|-------------------|-------------------|-------------|
+| **Gateway** | Network | High | Low |
+| **SDK** | Application | Medium | Medium |
+| **eBPF** | Kernel | Very High | None |
+
+---
+
+## Comparison
+```
+                    Bypass Resistance
+                           ▲
+                           │
+            eBPF ●─────────┼─────────────────
+                           │
+                           │
+         Gateway ●─────────┼─────────────────
+                           │
+             SDK ●─────────┼─────────────────
+                           │
+                           └──────────────────► Semantic Richness
+```
+
+---
+
+## Architecture Details
+
+<CardGroup cols={3}>
+  <Card title="Protocol Gateway" icon="server" href="/architectures/gateway">
+    MCP proxy with network-level enforcement
+  </Card>
+  <Card title="SDK / Instrumentation" icon="code" href="/architectures/sdk">
+    Embedded hooks with full context access
+  </Card>
+  <Card title="Kernel / eBPF" icon="microchip" href="/architectures/ebpf">
+    OS-level syscall interception
+  </Card>
+</CardGroup>
+
+---
+
+## Selection Guide
+
+<AccordionGroup>
+  <Accordion title="Choose Gateway when..." icon="server">
+    - MCP-based tool ecosystem
+    - Network-level enforcement acceptable
+    - Minimal agent changes required
+    - Mature network security practices
+  </Accordion>
+  
+  <Accordion title="Choose SDK when..." icon="code">
+    - Rich context needed for policies
+    - Non-MCP tools in use
+    - Strong engineering capacity
+    - Deep framework integration feasible
+  </Accordion>
+  
+  <Accordion title="Choose eBPF when..." icon="microchip">
+    - Maximum bypass resistance required
+    - Agent code cannot be modified
+    - Complete syscall visibility needed
+    - High-security environment
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Layered Deployment
+
+For defense in depth, combine architectures:
+
+1. **Primary**: Gateway for MCP tools
+2. **Secondary**: SDK for custom tools and rich context
+3. **Tertiary**: eBPF as detection backstop
+
+No single architecture is optimal for all dimensions.
