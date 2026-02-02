@@ -1,0 +1,76 @@
+---
+title: Kernel / eBPF
+description: OS-level interception using eBPF and LSM hooks.
+---
+
+## Overview
+
+The eBPF architecture intercepts syscalls at the kernel level:
+```
+┌─────────────────────────────┐
+│  Agent Process (User Space) │
+└─────────────┬───────────────┘
+              │ syscall
+┌─────────────▼───────────────┐
+│  AARM eBPF Hooks (Kernel)   │
+└─────────────┬───────────────┘
+              │ allow/deny
+┌─────────────▼───────────────┐
+│  System Calls               │
+│  (network, file, process)   │
+└─────────────────────────────┘
+```
+
+---
+
+## Properties
+
+| Property | Value |
+|----------|-------|
+| Enforcement point | Kernel |
+| Bypass resistance | Very High |
+| Semantic visibility | Low (syscalls only) |
+| Integration effort | None |
+| Context access | None (process-level only) |
+
+---
+
+## Implementation
+```c
+SEC("lsm/socket_connect")
+int aarm_socket_connect(struct socket *sock, 
+                        struct sockaddr *address) {
+    u32 pid = bpf_get_current_pid_tgid() >> 32;
+    
+    if (!is_monitored_process(pid))
+        return 0;
+    
+    struct sockaddr_in *addr = (struct sockaddr_in *)address;
+    u32 dest_ip = addr->sin_addr.s_addr;
+    
+    if (!is_allowed_destination(pid, dest_ip)) {
+        emit_blocked_event(pid, dest_ip);
+        return -EPERM;
+    }
+    
+    return 0;
+}
+```
+
+---
+
+## Use Cases
+
+- Maximum security environments
+- Unmodifiable agent code
+- Backstop detection layer
+- Compliance audit trail
+
+---
+
+## Limitations
+
+- Limited semantic visibility
+- Cannot see encrypted payloads
+- Requires syscall-to-action mapping
+- Linux kernel 4.18+ required
