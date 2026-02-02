@@ -1,0 +1,189 @@
+---
+title: Conformance Testing
+description: How to verify AARM compliance.
+---
+
+## Test Protocol
+
+<Steps>
+  <Step title="Conformance Tests">
+    Verify each MUST requirement using specified tests
+  </Step>
+  <Step title="Security Tests">
+    Execute injection benchmarks and exfiltration scenarios
+  </Step>
+  <Step title="Performance Tests">
+    Measure latency and throughput under load
+  </Step>
+  <Step title="Forensic Tests">
+    Verify receipt completeness and reconstruction
+  </Step>
+  <Step title="Red Team">
+    Attempt bypass through architectural gaps
+  </Step>
+</Steps>
+
+---
+
+## R1: In-Line Authorization
+```python
+def test_inline_authorization():
+    # Configure DENY policy
+    policy = """
+    rules:
+      - id: test-deny
+        match:
+          tool: test_tool
+        action: DENY
+    """
+    
+    # Submit action
+    try:
+        result = aarm.execute(tool="test_tool", params={})
+        assert False, "Action should have been denied"
+    except PolicyDenied:
+        pass
+    
+    # Verify no execution
+    assert tool_mock.call_count == 0
+    
+    # Verify receipt
+    receipt = get_latest_receipt()
+    assert receipt["decision"]["result"] == "DENY"
+```
+
+---
+
+## R2: Parameter Validation
+```python
+def test_parameter_validation():
+    policy = """
+    rules:
+      - id: limit-query
+        match:
+          tool: database
+          parameters:
+            limit: { gt: 100 }
+        action: DENY
+    """
+    
+    # Should be denied
+    with pytest.raises(PolicyDenied):
+        aarm.execute(tool="database", params={"limit": 500})
+    
+    # Should be allowed
+    result = aarm.execute(tool="database", params={"limit": 50})
+    assert result is not None
+```
+
+---
+
+## R3: Step-Up Authorization
+```python
+async def test_step_up():
+    policy = """
+    rules:
+      - id: require-approval
+        match:
+          tool: destructive_tool
+        action: STEP_UP
+        approvers: [test-approver]
+        timeout: 10
+    """
+    
+    # Start action (should block)
+    task = asyncio.create_task(
+        aarm.execute(tool="destructive_tool", params={})
+    )
+    
+    # Simulate approval
+    await asyncio.sleep(1)
+    await approval_service.approve(
+        request_id=get_pending_request().id,
+        approver="test-approver"
+    )
+    
+    # Action should complete
+    result = await task
+    assert result is not None
+```
+
+---
+
+## R4: Receipt Verification
+```python
+def test_receipt_signature():
+    # Generate receipt
+    aarm.execute(tool="test_tool", params={"key": "value"})
+    receipt = get_latest_receipt()
+    
+    # Verify signature
+    assert verifier.verify(receipt) == True
+    
+    # Tamper with receipt
+    receipt["action"]["parameters"]["key"] = "tampered"
+    assert verifier.verify(receipt) == False
+```
+
+---
+
+## R5: Identity Binding
+```python
+def test_identity_binding():
+    # Execute with identity context
+    with identity_context(human="alice", service="svc", session="sess"):
+        aarm.execute(tool="test_tool", params={})
+    
+    receipt = get_latest_receipt()
+    assert receipt["action"]["identity"]["human"] == "alice"
+    assert receipt["action"]["identity"]["service"] == "svc"
+    assert receipt["action"]["identity"]["session"] == "sess"
+```
+
+---
+
+## Performance Targets
+
+| Metric | Target |
+|--------|--------|
+| P50 latency | < 10ms |
+| P95 latency | < 50ms |
+| P99 latency | < 100ms |
+| Availability | 99.9% |
+```python
+def test_latency():
+    latencies = []
+    for _ in range(1000):
+        start = time.perf_counter()
+        aarm.execute(tool="test_tool", params={})
+        latencies.append(time.perf_counter() - start)
+    
+    p50 = percentile(latencies, 50)
+    p95 = percentile(latencies, 95)
+    p99 = percentile(latencies, 99)
+    
+    assert p50 < 0.010  # 10ms
+    assert p95 < 0.050  # 50ms
+    assert p99 < 0.100  # 100ms
+```
+
+---
+
+## Benchmarks
+
+Recommended test suites:
+
+- **AgentDojo** — Injection attack scenarios
+- **ToolEmu** — Risky agent failures
+- **HackAPrompt** — Prompt injection patterns
+
+---
+
+## Certification
+
+To claim AARM compliance:
+
+1. Pass all MUST requirement tests
+2. Document SHOULD requirement status
+3. Publish test results
+4. Submit for community review (optional)
