@@ -18,7 +18,8 @@
             "pages": [
               "index",
               "problem",
-              "definition"
+              "definition",
+              "action-classification"
             ]
           },
           {
@@ -27,7 +28,8 @@
               "threats/overview",
               "threats/prompt-injection",
               "threats/confused-deputy",
-              "threats/data-exfiltration"
+              "threats/data-exfiltration",
+              "threats/intent-drift"
             ]
           },
           {
@@ -35,9 +37,11 @@
             "pages": [
               "components/overview",
               "components/action-mediation",
+              "components/context-accumulator",
               "components/policy-engine",
               "components/approval-service",
-              "components/receipts"
+              "components/receipts",
+              "components/telemetry"
             ]
           },
           {
