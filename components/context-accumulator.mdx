@@ -1,0 +1,291 @@
+---
+title: Context Accumulator
+description: "Tracks session state, prior actions, and data accessed to enable context-aware policy evaluation."
+---
+
+## Purpose
+
+The Context Accumulator maintains a running record of everything relevant to evaluating the current action in context. Without it, each action is evaluated in isolation, making it impossible to detect compositional attacks or intent drift.
+
+<Note>
+The Context Accumulator answers: "Given everything this agent has seen and done in this session, does this action make sense?"
+</Note>
+
+---
+
+## What It Tracks
+
+| Category | Data | Purpose |
+|----------|------|---------|
+| **Original Request** | User's initial prompt/instruction | Baseline for intent comparison |
+| **Action History** | Sequence of actions taken this session | Detect suspicious patterns |
+| **Data Accessed** | Classification of data read/retrieved | Track sensitive data exposure |
+| **Tool Outputs** | Results returned from previous actions | Understand agent's information state |
+| **Entities Referenced** | Users, accounts, resources mentioned | Detect scope expansion |
+| **Time Elapsed** | Duration and pacing of session | Identify anomalous timing |
+
+---
+
+## Context Schema
+```json
+{
+  "session_id": "sess_abc123",
+  "started_at": "2025-02-04T10:30:00Z",
+  
+  "original_request": {
+    "text": "Help me prepare for my meeting with the Johnson account",
+    "intent_classification": "meeting_prep",
+    "entities": ["Johnson account"],
+    "expected_scope": ["crm", "email", "calendar"]
+  },
+  
+  "action_history": [
+    {
+      "action_id": "act_001",
+      "timestamp": "2025-02-04T10:30:05Z",
+      "tool": "crm",
+      "operation": "query",
+      "parameters": {"account": "Johnson"},
+      "result_summary": "Found account with 3 contacts",
+      "data_classification": "INTERNAL"
+    },
+    {
+      "action_id": "act_002",
+      "timestamp": "2025-02-04T10:30:12Z",
+      "tool": "email",
+      "operation": "search",
+      "parameters": {"from": "*@johnson.com"},
+      "result_summary": "Found 12 emails",
+      "data_classification": "INTERNAL"
+    }
+  ],
+  
+  "accumulated_state": {
+    "data_classifications_accessed": ["INTERNAL"],
+    "tools_used": ["crm", "email"],
+    "entities_accessed": ["Johnson account", "john@johnson.com"],
+    "action_count": 2,
+    "semantic_distance": 0.15
+  },
+  
+  "risk_signals": {
+    "scope_expansion": false,
+    "classification_escalation": false,
+    "unusual_sequence": false,
+    "drift_detected": false
+  }
+}
+```
+
+---
+
+## Core Operations
+
+### Append Action
+
+Record each action as it's requested (before execution).
+```python
+class ContextAccumulator:
+    def append_action(self, action: Action) -> None:
+        self.action_history.append({
+            "action_id": action.id,
+            "timestamp": datetime.utcnow(),
+            "tool": action.tool,
+            "operation": action.operation,
+            "parameters": action.parameters,
+            "data_classification": self.classify_action(action)
+        })
+        self.update_accumulated_state()
+```
+
+### Record Result
+
+Update context with action outcome (after execution).
+```python
+    def record_result(self, action_id: str, result: ActionResult) -> None:
+        action = self.find_action(action_id)
+        action["result_summary"] = self.summarize_result(result)
+        action["data_classification"] = self.classify_result(result)
+        self.update_risk_signals()
+```
+
+### Get Context for Evaluation
+
+Provide current context to the policy engine.
+```python
+    def get_evaluation_context(self) -> EvaluationContext:
+        return EvaluationContext(
+            original_request=self.original_request,
+            action_history=self.action_history,
+            accumulated_state=self.accumulated_state,
+            risk_signals=self.risk_signals
+        )
+```
+
+---
+
+## Accumulated State Computation
+
+### Data Classifications Accessed
+
+Track the highest sensitivity level seen in the session.
+```python
+def update_classifications(self):
+    classifications = set()
+    for action in self.action_history:
+        if action.get("data_classification"):
+            classifications.add(action["data_classification"])
+    self.accumulated_state["data_classifications_accessed"] = list(classifications)
+```
+
+### Semantic Distance
+
+Measure how far current actions have drifted from original intent.
+```python
+def compute_semantic_distance(self, current_action: Action) -> float:
+    # Embed original request and current action
+    original_embedding = self.embed(self.original_request["text"])
+    action_description = f"{current_action.tool}.{current_action.operation}({current_action.parameters})"
+    action_embedding = self.embed(action_description)
+    
+    # Compute cosine distance
+    distance = 1 - cosine_similarity(original_embedding, action_embedding)
+    return distance
+```
+
+### Scope Expansion Detection
+
+Detect when agent accesses resources outside expected scope.
+```python
+def detect_scope_expansion(self, action: Action) -> bool:
+    expected_scope = self.original_request.get("expected_scope", [])
+    if not expected_scope:
+        return False
+    return action.tool not in expected_scope
+```
+
+---
+
+## Risk Signal Computation
+```python
+def update_risk_signals(self):
+    self.risk_signals = {
+        "scope_expansion": self.detect_scope_expansion(self.latest_action),
+        
+        "classification_escalation": self.max_classification_accessed() > 
+                                      self.original_request.get("expected_classification", "PUBLIC"),
+        
+        "unusual_sequence": self.detect_unusual_sequence(),
+        
+        "drift_detected": self.accumulated_state["semantic_distance"] > 0.7,
+        
+        "velocity_anomaly": self.detect_velocity_anomaly(),
+        
+        "chain_length_exceeded": len(self.action_history) > 
+                                  self.get_expected_chain_length()
+    }
+```
+
+---
+
+## Integration with Policy Engine
+
+The Context Accumulator provides context to the Policy Engine for every evaluation:
+```
+┌─────────────────┐         ┌─────────────────────┐
+│  Action Request │ ──────► │ Context Accumulator │
+└─────────────────┘         └──────────┬──────────┘
+                                       │
+                                       ▼
+                            ┌─────────────────────┐
+                            │   Policy Engine     │
+                            │                     │
+                            │  ┌───────────────┐  │
+                            │  │ Static Policy │  │
+                            │  └───────┬───────┘  │
+                            │          │          │
+                            │          ▼          │
+                            │  ┌───────────────┐  │
+                            │  │Context Eval   │◄─┼─── Evaluation Context
+                            │  └───────┬───────┘  │
+                            │          │          │
+                            │          ▼          │
+                            │     Decision        │
+                            └─────────────────────┘
+```
+
+---
+
+## Storage Considerations
+
+### Session Scope
+
+Context is accumulated per session. When the session ends, context is:
+
+1. Written to receipt store for forensics
+2. Cleared from active memory
+
+### Memory Limits
+
+For long sessions, implement sliding window or summarization:
+```python
+MAX_ACTION_HISTORY = 100
+
+def append_action(self, action):
+    if len(self.action_history) >= MAX_ACTION_HISTORY:
+        # Summarize oldest actions
+        self.summarize_and_compact()
+    self.action_history.append(action)
+```
+
+### Sensitive Data Handling
+
+Context may contain sensitive information. Ensure:
+
+| Requirement | Implementation |
+|-------------|----------------|
+| Encryption at rest | Encrypt context store |
+| Access control | Only AARM components can read context |
+| Retention limits | Purge context after session + retention period |
+| Redaction | Redact sensitive values in summaries |
+
+---
+
+## Configuration
+```yaml
+context_accumulator:
+  max_action_history: 100
+  semantic_distance_threshold: 0.7
+  chain_length_warning: 15
+  chain_length_limit: 30
+  
+  classification_levels:
+    - PUBLIC
+    - INTERNAL
+    - CONFIDENTIAL
+    - RESTRICTED
+  
+  summarization:
+    enabled: true
+    trigger_at: 50
+    keep_recent: 20
+  
+  risk_signals:
+    scope_expansion: true
+    classification_escalation: true
+    drift_detection: true
+    velocity_analysis: true
+```
+
+---
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Policy Engine" icon="scale-balanced" href="/components/policy-engine">
+    How context is used in policy evaluation
+  </Card>
+  <Card title="Action Classification" icon="tags" href="/action-classification">
+    The three action categories that depend on context
+  </Card>
+</CardGroup>
