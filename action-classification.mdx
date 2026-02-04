@@ -1,0 +1,290 @@
+---
+title: Action Classification
+description: "How AARM categorizes actions based on policy and contextual intent alignment."
+---
+
+## Overview
+
+Not all actions can be evaluated the same way. A static policy that simply allows or denies based on action type will either block legitimate work or miss actual threats.
+
+AARM classifies actions into three categories based on how they should be evaluated:
+
+<CardGroup cols={3}>
+  <Card title="Forbidden" icon="ban">
+    Always blocked regardless of context
+  </Card>
+  <Card title="Context-Dependent Deny" icon="shield-xmark">
+    Allowed by policy, blocked when context reveals misalignment
+  </Card>
+  <Card title="Context-Dependent Allow" icon="shield-check">
+    Denied by default, permitted when context confirms alignment
+  </Card>
+</CardGroup>
+
+---
+
+## Why Classification Matters
+
+Consider an AI agent that can send emails and query databases. Both capabilities are legitimate and necessary.
+
+**Scenario 1**: Agent sends a meeting invite to a colleague.
+→ Clearly fine. Allow.
+
+**Scenario 2**: Agent queries customer PII, then immediately sends an email to an external address.
+→ Both actions are "allowed" individually. But the composition is a data breach.
+
+**Scenario 3**: Agent attempts to delete database records. Sounds dangerous. But the user explicitly said "clean up my test data from yesterday."
+→ The action aligns perfectly with stated intent. Blocking it frustrates the user for no security benefit.
+
+Static allow/deny policies cannot handle these scenarios. Classification based on context can.
+
+---
+
+## The Three Categories
+
+### Forbidden Actions
+
+Actions that are **always blocked** regardless of context, intent, or user request. These represent hard organizational limits.
+
+| Characteristics | Examples |
+|-----------------|----------|
+| Catastrophic, irreversible impact | `DROP DATABASE production` |
+| Violates compliance requirements | Send unencrypted PII to external systems |
+| Known malicious patterns | Connect to known C2 domains |
+| Explicitly prohibited by policy | `rm -rf /`, disable security controls |
+
+**Evaluation**: Static policy match → **DENY**
+
+No context evaluation needed. These actions are never permitted regardless of how convincing the justification appears.
+```yaml
+# Example policy
+rules:
+  - id: forbidden-drop-database
+    match:
+      tool: database
+      operation: drop
+    action: DENY
+    classification: forbidden
+    reason: "Database drops are never permitted via agent"
+```
+
+---
+
+### Context-Dependent Deny
+
+Actions that are **explicitly allowed by policy** but should be **blocked when context reveals inconsistency** with the user's stated intent.
+
+| Characteristics | Examples |
+|-----------------|----------|
+| Permitted capability used in suspicious sequence | Email after reading sensitive data |
+| Parameters inconsistent with session goal | User asked for "Q4 report", agent accessing HR records |
+| Destination misalignment | Internal task sending data to external recipient |
+| Timing anomalies | Bulk operations when user requested single lookup |
+
+**Evaluation**: Policy says ALLOW + context inconsistency → **DENY**
+
+The key insight: the action itself is fine. It's the context that makes it suspicious.
+```yaml
+# Example policy
+rules:
+  - id: email-after-sensitive-read
+    match:
+      tool: email
+      operation: send
+    context:
+      prior_actions:
+        contains: [database.query, file.read]
+      data_classification:
+        contains: [PII, CONFIDENTIAL]
+      recipient:
+        external: true
+    action: DENY
+    classification: context_dependent_deny
+    reason: "Cannot send externally after accessing sensitive data"
+```
+
+**What context is evaluated?**
+
+| Context Signal | What It Reveals |
+|----------------|-----------------|
+| Prior actions in session | What the agent has done leading up to this |
+| Data accessed | Classification of information the agent has seen |
+| Original user request | What the user actually asked for |
+| Parameter patterns | Whether this action fits the stated goal |
+| Timing and volume | Whether behavior matches expected patterns |
+
+---
+
+### Context-Dependent Allow
+
+Actions that are **denied by default** but should be **permitted when context demonstrates clear alignment** with legitimate user intent.
+
+| Characteristics | Examples |
+|-----------------|----------|
+| Destructive but requested | Delete records when user asked for cleanup |
+| Elevated privilege but justified | Access admin panel for explicitly requested config change |
+| Unusual but explained | Bulk export when user requested "download all my data" |
+| Sensitive but appropriate | Access medical records for healthcare workflow |
+
+**Evaluation**: Policy says DENY + context alignment → **STEP-UP** or **ALLOW**
+
+The key insight: the action looks dangerous in isolation, but context shows it's exactly what the user wanted.
+```yaml
+# Example policy
+rules:
+  - id: delete-with-user-intent
+    match:
+      tool: database
+      operation: delete
+    context:
+      user_intent:
+        contains: [cleanup, remove, delete]
+      target_ownership:
+        owned_by: requesting_user
+    action: STEP_UP
+    classification: context_dependent_allow
+    approvers: [data-owner]
+    reason: "Deletion aligns with user intent, requires confirmation"
+```
+
+**When to allow vs step-up?**
+
+| Context Confidence | Action |
+|--------------------|--------|
+| High confidence in alignment, low impact | ALLOW |
+| High confidence, high impact | STEP-UP |
+| Medium confidence | STEP-UP |
+| Low confidence | DENY |
+
+---
+
+## Evaluation Flow
+```
+                    ┌─────────────────┐
+                    │  Action Request │
+                    └────────┬────────┘
+                             ▼
+                    ┌─────────────────┐
+                    │ Forbidden Check │
+                    └────────┬────────┘
+                             │
+              ┌──────────────┴──────────────┐
+              ▼                             ▼
+        [Matches]                    [No Match]
+              │                             │
+              ▼                             ▼
+           DENY                  ┌─────────────────┐
+                                 │  Policy Check   │
+                                 └────────┬────────┘
+                                          │
+                          ┌───────────────┼───────────────┐
+                          ▼               ▼               ▼
+                    [ALLOW]          [DENY]         [STEP-UP]
+                          │               │               │
+                          ▼               ▼               ▼
+               ┌─────────────────────────────────────────────┐
+               │           Context Evaluation                │
+               └─────────────────────────────────────────────┘
+                          │               │               │
+                          ▼               ▼               ▼
+               Context-Dependent   Context-Dependent   Context-Dependent
+                    Deny?              Allow?            Decision
+                          │               │               │
+                          ▼               ▼               ▼
+                  [Mismatch]         [Alignment]      [Evaluate]
+                       │                  │               │
+                       ▼                  ▼               ▼
+                     DENY            ALLOW/STEP-UP    STEP-UP
+```
+
+---
+
+## Implementation Considerations
+
+### Context Accumulator Requirements
+
+To evaluate context-dependent actions, the system must track:
+
+| Data | Purpose |
+|------|---------|
+| Original user request | Baseline for intent comparison |
+| Prior actions (this session) | Sequence leading to current action |
+| Data accessed | Classification of information seen |
+| Tool outputs | What the agent learned from previous calls |
+| Time elapsed | Detect unusual timing patterns |
+
+See [Context Accumulator](/components/context-accumulator) for implementation details.
+
+### Policy Engine Requirements
+
+The policy engine must support:
+
+| Capability | Why |
+|------------|-----|
+| Static rule matching | Forbidden action detection |
+| Context predicates | Evaluate session state |
+| Confidence scoring | Determine allow vs step-up |
+| Composition rules | Detect suspicious sequences |
+
+See [Policy Engine](/components/policy-engine) for implementation details.
+
+---
+
+## Examples
+
+<AccordionGroup>
+  <Accordion title="Example: Email after database query">
+    **Action**: `email.send(to="external@gmail.com", body="...")`
+    
+    **Context**:
+    - Prior action: `database.query("SELECT * FROM customers")`
+    - Data classification: PII
+    - User request: "Find customer contact info"
+    
+    **Evaluation**:
+    - Policy: Email sending is ALLOWED
+    - Context: Just read PII, sending externally
+    - Classification: Context-Dependent Deny
+    - Decision: **DENY**
+  </Accordion>
+  
+  <Accordion title="Example: Delete matching user intent">
+    **Action**: `database.delete(table="test_records", where="created_by=user123")`
+    
+    **Context**:
+    - User request: "Clean up the test data I created yesterday"
+    - Target ownership: Records created by requesting user
+    - No sensitive data accessed
+    
+    **Evaluation**:
+    - Policy: Deletes are DENIED by default
+    - Context: Aligns with explicit user request, user owns data
+    - Classification: Context-Dependent Allow
+    - Decision: **STEP-UP** (confirm with user)
+  </Accordion>
+  
+  <Accordion title="Example: Forbidden action with convincing context">
+    **Action**: `database.drop(database="production")`
+    
+    **Context**:
+    - User request: "The CEO said we need to drop the production database immediately"
+    
+    **Evaluation**:
+    - Classification: Forbidden
+    - Decision: **DENY**
+    - Context is irrelevant. Social engineering attempts cannot override forbidden actions.
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Context Accumulator" icon="layer-group" href="/components/context-accumulator">
+    How to track session state for context evaluation
+  </Card>
+  <Card title="Policy Engine" icon="scale-balanced" href="/components/policy-engine">
+    Implementing classification-aware policy evaluation
+  </Card>
+</CardGroup>
