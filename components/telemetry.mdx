@@ -1,0 +1,353 @@
+---
+title: Telemetry Exporter
+description: "Exports structured events to SIEM, SOAR, and security platforms for monitoring and compliance."
+---
+
+## Purpose
+
+The Telemetry Exporter sends structured events from AARM to external security platforms. This enables:
+
+| Capability | Benefit |
+|------------|---------|
+| **Real-time monitoring** | SOC visibility into agent actions |
+| **Correlation** | Link agent activity to other security events |
+| **Compliance** | Audit trail for regulatory requirements |
+| **Alerting** | Trigger workflows on suspicious patterns |
+| **Analytics** | Long-term trend analysis |
+
+<Note>
+AARM provides inline enforcement. Telemetry enables organizational visibility and response workflows.
+</Note>
+
+---
+
+## Event Types
+
+### Action Events
+
+Emitted for every action processed by AARM.
+```json
+{
+  "event_type": "aarm.action",
+  "timestamp": "2025-02-04T10:30:05.123Z",
+  "session_id": "sess_abc123",
+  
+  "action": {
+    "action_id": "act_001",
+    "tool": "database",
+    "operation": "query",
+    "parameters_hash": "sha256:abc123"
+  },
+  
+  "identity": {
+    "human": "alice@company.com",
+    "service": "agent-svc",
+    "agent": "sales-assistant-v2"
+  },
+  
+  "decision": {
+    "result": "ALLOW",
+    "classification": "context_dependent_allow",
+    "policy_id": "policy-123",
+    "context_signals": {
+      "semantic_distance": 0.15,
+      "scope_expansion": false
+    }
+  },
+  
+  "execution": {
+    "success": true,
+    "duration_ms": 45
+  }
+}
+```
+
+### Policy Decision Events
+
+Emitted when actions are denied or escalated.
+```json
+{
+  "event_type": "aarm.decision",
+  "timestamp": "2025-02-04T10:31:00.456Z",
+  "severity": "HIGH",
+  
+  "action": {
+    "action_id": "act_007",
+    "tool": "email",
+    "operation": "send",
+    "destination": "external"
+  },
+  
+  "decision": {
+    "result": "DENY",
+    "classification": "context_dependent_deny",
+    "reason": "Sending externally after accessing PII",
+    "policy_id": "email-after-sensitive-read"
+  },
+  
+  "context": {
+    "prior_actions": ["database.query"],
+    "data_classifications_accessed": ["PII"],
+    "semantic_distance": 0.65
+  }
+}
+```
+
+### Approval Events
+
+Emitted for step-up authorization workflows.
+```json
+{
+  "event_type": "aarm.approval",
+  "timestamp": "2025-02-04T10:32:00.789Z",
+  
+  "request": {
+    "request_id": "apr_001",
+    "action_id": "act_010",
+    "tool": "database",
+    "operation": "delete"
+  },
+  
+  "workflow": {
+    "status": "APPROVED",
+    "approver": "bob@company.com",
+    "response_time_ms": 45000,
+    "reason": "User confirmed cleanup request"
+  }
+}
+```
+
+### Drift Detection Events
+
+Emitted when intent drift is detected.
+```json
+{
+  "event_type": "aarm.drift",
+  "timestamp": "2025-02-04T10:35:00.000Z",
+  "severity": "MEDIUM",
+  
+  "session_id": "sess_abc123",
+  "original_intent": "Prepare for Johnson meeting",
+  
+  "drift_signals": {
+    "semantic_distance": 0.78,
+    "action_count": 15,
+    "scope_expansion": true,
+    "classification_escalation": true
+  },
+  
+  "action_chain_summary": [
+    "crm.query → email.search → documents.search → file.read(confidential)"
+  ]
+}
+```
+
+---
+
+## Schema Standards
+
+AARM supports multiple schema standards for compatibility:
+
+### OCSF (Open Cybersecurity Schema Framework)
+```yaml
+telemetry:
+  schema: ocsf
+  version: "1.1"
+  mappings:
+    action_event: "api_activity"
+    decision_event: "security_finding"
+    approval_event: "authorization"
+```
+
+### CEF (Common Event Format)
+```yaml
+telemetry:
+  schema: cef
+  vendor: "AARM"
+  product: "RuntimeSecurity"
+  version: "1.0"
+```
+
+### Custom Schema
+```yaml
+telemetry:
+  schema: custom
+  schema_url: "https://company.com/schemas/aarm-events.json"
+```
+
+---
+
+## Export Destinations
+
+### Real-time Streaming
+```yaml
+exporters:
+  - type: kafka
+    brokers: ["kafka1:9092", "kafka2:9092"]
+    topic: "aarm-events"
+    
+  - type: webhook
+    url: "https://siem.company.com/api/events"
+    auth:
+      type: bearer
+      token_env: SIEM_TOKEN
+    
+  - type: aws_kinesis
+    stream: "aarm-events"
+    region: "us-east-1"
+```
+
+### Batch Export
+```yaml
+batch_export:
+  enabled: true
+  destination: s3://security-logs/aarm/
+  format: parquet
+  interval: 1h
+  partitioning: ["date", "event_type"]
+```
+
+### SIEM Integrations
+
+| Platform | Integration Method |
+|----------|-------------------|
+| Splunk | HTTP Event Collector (HEC) |
+| Elastic | Elasticsearch API / Logstash |
+| Microsoft Sentinel | Log Analytics API |
+| Google Chronicle | Ingestion API |
+| Sumo Logic | HTTP Source |
+| Datadog | Logs API |
+
+---
+
+## Implementation
+```python
+class TelemetryExporter:
+    def __init__(self, config: TelemetryConfig):
+        self.exporters = self.init_exporters(config)
+        self.schema = self.init_schema(config.schema)
+        self.buffer = EventBuffer(config.buffer_size)
+    
+    def emit(self, event: AARMEvent) -> None:
+        # Transform to configured schema
+        formatted = self.schema.format(event)
+        
+        # Buffer for batching
+        self.buffer.add(formatted)
+        
+        # Flush if buffer full or high-severity
+        if self.buffer.should_flush() or event.severity == "HIGH":
+            self.flush()
+    
+    def flush(self) -> None:
+        events = self.buffer.drain()
+        for exporter in self.exporters:
+            try:
+                exporter.send(events)
+            except ExportError as e:
+                self.handle_export_failure(events, e)
+    
+    def handle_export_failure(self, events, error):
+        # Write to local fallback
+        self.fallback_store.write(events)
+        # Alert on persistent failures
+        if self.consecutive_failures > 3:
+            self.alert_export_degraded()
+```
+
+---
+
+## Filtering and Enrichment
+
+### Filtering
+
+Control what events are exported:
+```yaml
+telemetry:
+  filters:
+    # Only export denials and approvals
+    - event_type: ["aarm.decision", "aarm.approval"]
+    
+    # Or filter by severity
+    - min_severity: MEDIUM
+    
+    # Or by classification
+    - classifications: ["forbidden", "context_dependent_deny"]
+```
+
+### Enrichment
+
+Add organizational context:
+```yaml
+telemetry:
+  enrichment:
+    - field: identity.human
+      lookup: ldap
+      add_fields: [department, manager, location]
+      
+    - field: action.tool
+      lookup: asset_inventory
+      add_fields: [asset_criticality, data_owner]
+```
+
+---
+
+## Monitoring the Exporter
+
+| Metric | Purpose |
+|--------|---------|
+| `aarm_telemetry_events_emitted` | Total events sent |
+| `aarm_telemetry_export_latency_ms` | Time to send events |
+| `aarm_telemetry_export_failures` | Failed export attempts |
+| `aarm_telemetry_buffer_size` | Current buffer depth |
+| `aarm_telemetry_dropped_events` | Events lost due to failures |
+
+---
+
+## Configuration Example
+```yaml
+telemetry:
+  enabled: true
+  
+  schema: ocsf
+  
+  exporters:
+    - type: splunk_hec
+      url: "https://splunk.company.com:8088"
+      token_env: SPLUNK_HEC_TOKEN
+      index: "aarm_events"
+      
+    - type: s3
+      bucket: "security-logs"
+      prefix: "aarm/"
+      format: json
+      compression: gzip
+  
+  filters:
+    min_severity: LOW
+    
+  enrichment:
+    - field: identity.human
+      lookup: ldap
+      
+  buffer:
+    size: 1000
+    flush_interval: 5s
+    
+  retry:
+    max_attempts: 3
+    backoff: exponential
+```
+
+---
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Receipts" icon="receipt" href="/components/receipts">
+    Cryptographically signed records for forensics
+  </Card>
+  <Card title="Conformance Requirements" icon="clipboard-check" href="/conformance/requirements">
+    R9: Telemetry export requirements
+  </Card>
+</CardGroup>
