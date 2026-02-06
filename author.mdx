@@ -1,59 +1,74 @@
 ---
-title: "Author"
-description: "About the author of AARM (Autonomous Action Runtime Management) and why this work is published openly for everyone to use."
+title: Authors & Contributors
+description: The people behind the AARM specification.
 ---
 
-## About the author
+## Author
 
-Hi — I’m **Herman Errico**.
-
-I work at the intersection of **security engineering, compliance frameworks, and AI governance**, with a focus on turning abstract requirements into **runtime controls** that teams can actually implement and operate.
-
-Over the last few years, I’ve spent a lot of time on:
-- **Security control design** (policy, identity, enforcement, auditability)
-- Mapping practical controls to **ISO 27001/27002**, **SOC 2**, **NIST**, and emerging **AI governance** expectations
-- Building programs and tooling that make security **measurable**, **automatable**, and **repeatable**
-- Thinking about how modern systems fail when autonomy increases (humans → software → AI-driven systems)
-
-## Why I created AARM
-
-As AI systems shift from “assistant” to “actor,” the main risk stops being what the model *says* and becomes what the system *does*:  
-**tool calls, API actions, state changes, and data movement**.
-
-AARM (Autonomous Action Runtime Management) is my attempt to name and define that missing layer:
-> a runtime control plane for **authorizing, constraining, and auditing autonomous actions**.
-
-This is not a product pitch — it’s a **blueprint** meant to be useful whether you’re building with MCP, function calling, plugins, internal tool servers, or whatever comes next.
-
-## Open by default
-
-This work is published **openly** on purpose.
-
-AARM is here for:
-- builders shipping agentic workflows in production
-- security teams trying to govern tool-enabled AI
-- researchers and standards folks who want a clean vocabulary
-- anyone who needs a practical way to reason about **runtime AI actions**
-
-You can:
-- reuse the terminology and definitions
-- implement the architecture patterns
-- copy/paste the checklists into your own policies
-- propose edits, extensions, and improvements
-
-If you build on it, attribution is appreciated — but the priority is adoption and shared progress.
-
-## Contact / links
-
-<Card title="Contribute to AARM" icon="code-branch" horizontal href="/contributing">
-  Propose edits, add patterns, and share real-world implementation notes.
+<Card>
+  <div style={{ display: "flex", gap: "24px", alignItems: "flex-start" }}>
+    <img 
+      src="/images/authors/herman-errico.jpg" 
+      alt="Herman Errico" 
+      style={{ width: "120px", height: "120px", borderRadius: "12px", objectFit: "cover" }}
+    />
+    <div>
+      <h3 style={{ margin: "0 0 8px 0" }}>Herman Errico</h3>
+      <p style={{ margin: "0 0 12px 0", color: "#64748b" }}>Specification Author</p>
+      <p style={{ margin: "0 0 16px 0" }}>
+        Product Manager at Vanta focused on AI security and compliance automation. 
+        Author of research on securing the Model Context Protocol (MCP). 
+        Background spanning cybersecurity consulting, enterprise security architecture, and compliance frameworks.
+      </p>
+      <div style={{ display: "flex", gap: "12px" }}>
+        <a href="https://linkedin.com/in/hermanerrico" target="_blank">LinkedIn</a>
+        <a href="https://github.com/herman-prod" target="_blank">GitHub</a>
+        <a href="https://arxiv.org/abs/2511.20920" target="_blank">MCP Security Paper</a>
+      </div>
+    </div>
+  </div>
 </Card>
 
-<Columns cols={2}>
-  <Card title="Blueprint" icon="book" href="/blueprint">
-    The core definitions and reference architecture.
+---
+
+## Contributors
+
+AARM is an open specification. We welcome contributions from security researchers, agent framework developers, and enterprise practitioners.
+
+<Note>
+Want to contribute? Open an issue or pull request on the [GitHub repository](https://github.com/aarm-spec/aarm).
+</Note>
+
+### How to Contribute
+
+| Contribution Type | How |
+|-------------------|-----|
+| Report issues | Open a GitHub issue |
+| Suggest improvements | Submit a pull request |
+| Share implementation notes | Add to the Guides section |
+| Propose new patterns | Contribute to Patterns |
+| Review and feedback | Comment on open PRs |
+
+---
+
+## Acknowledgments
+
+The AARM specification builds on research and insights from the broader AI security community. We thank the authors of the papers cited in the [References](/research/references) section for their foundational work on agent security, prompt injection, and runtime protection.
+
+---
+
+## Contact
+
+For questions about the specification or collaboration inquiries:
+
+<CardGroup cols={2}>
+  <Card title="GitHub Discussions" icon="github" href="https://github.com/aarm-spec/aarm/discussions">
+    Ask questions and discuss the spec
   </Card>
-  <Card title="Patterns" icon="layer-group" href="/patterns">
-    Practical recipes for enforcement, approvals, receipts, and telemetry.
+  <Card title="Open an Issue" icon="circle-exclamation" href="https://github.com/aarm-spec/aarm/issues">
+    Report problems or suggest features
   </Card>
-</Columns>
+</CardGroup>
+```
+
+---
